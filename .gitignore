@@ -1,0 +1,10 @@
+# mill output
+out/
+.bsp/
+mill.*
+
+# idea stuff
+.idea/
+
+# metals
+.metals/

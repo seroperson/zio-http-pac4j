@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  compile-all:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Check code format
+        uses: jrouly/scalafmt-native-action@v1
+        with:
+          version: "3.8.3"
+          arguments: "-c .scalafmt.conf --test zio-http-pac4j example"
+      - uses: zhutmost/setup-mill@main
+      - name: Compile
+        run: mill __.compile
+      - name: Test
+        run: mill __.test
