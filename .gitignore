@@ -3,8 +3,11 @@ out/
 .bsp/
 mill.*
 
-# idea stuff
+# IDE stuff
 .idea/
+.vscode/
+.roo/
 
 # metals
 .metals/
+.bloop/
