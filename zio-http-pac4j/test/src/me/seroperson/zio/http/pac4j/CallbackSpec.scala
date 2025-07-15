@@ -3,7 +3,6 @@ package me.seroperson.zio.http.pac4j
 import zio.test._
 import zio.http._
 import zio._
-import me.seroperson.zio.http.pac4j.TestHelpers._
 
 object CallbackSpec extends ZIOSpecDefault {
 
@@ -15,4 +14,3 @@ object CallbackSpec extends ZIOSpecDefault {
     )
   )
 }
-

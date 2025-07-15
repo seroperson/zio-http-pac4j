@@ -12,7 +12,6 @@ import zio.http.MediaType
 import zio.ZIO
 
 class ZioHttpActionAdapter extends HttpActionAdapter {
-
   override def adapt(action: HttpAction, context: WebContext): AnyRef = {
     val hContext = context.asInstanceOf[ZioHttpWebContext]
     action match {
@@ -30,14 +29,14 @@ class ZioHttpActionAdapter extends HttpActionAdapter {
             hContext.setResponseStatus(Status.Forbidden.code)
           case HttpConstants.OK =>
             val okAction = a.asInstanceOf[OkAction]
-            hContext.writeResponseContent(okAction.getContent)
-            hContext.setResponseContentType(MediaType.text.html.fullType)
+            hContext.setContent(okAction.getContent)
+            hContext.setContentType(MediaType.text.html)
             hContext.setResponseStatus(Status.Ok.code)
           case HttpConstants.NO_CONTENT =>
             hContext.setResponseStatus(Status.NoContent.code)
         }
     }
-    ZIO.succeed(hContext.getResponse)
+    hContext.getResponse
   }
 
 }

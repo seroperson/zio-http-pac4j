@@ -6,7 +6,7 @@ object Version {
   val scala212 = "2.12.20"
   val scala213 = "2.13.16"
   val scala336 = "3.3.6"
-  val scalaCross = Seq(scala213, scala336)
+  val scalaCross = Seq(scala213 /*, scala336*/ )
 
   val zio = "2.1.19"
   val zioHttp = "3.3.3"

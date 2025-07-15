@@ -16,30 +16,34 @@ import scala.jdk.CollectionConverters._
 import org.pac4j.core.adapter.FrameworkAdapter
 import zio.http.Status.NotFound
 import org.pac4j.core.client.finder.DefaultCallbackClientFinder
+import org.pac4j.core.context.session.SessionStoreFactory
+import org.pac4j.core.context
+import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import org.pac4j.core.profile.ProfileManager
+import org.pac4j.core.profile.CommonProfile
+import org.pac4j.core.profile.factory.ProfileManagerFactory
+import me.seroperson.zio.http.pac4j.session.SessionRepository
 
 object Pac4jMiddleware {
 
   def middleware(
       config: SecurityConfig,
-      isProtgected: Boolean
-  ): HandlerAspect[SessionStore, SecurityContext] =
+      isProtected: Boolean
+  ) /*: HandlerAspect[Any, List[CommonProfile]]*/ =
     HandlerAspect.customAuthProvidingZIO(
       provide = (request: Request) => {
         (for {
           _ <- ZIO.logInfo("Got AUTHENTICATION Middleware")
-          sessionStore <- ZIO.service[SessionStore]
-          pac4jConfig <- ZIO.succeed(buildPac4jConfig(config))
+          pac4jConfig <- buildPac4jConfig(config)
           securityLogic <- ZIO
             .succeed {
-              FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(
-                pac4jConfig
-              )
               pac4jConfig.getSecurityLogic()
             }
           result <- securityLogic
             .perform(
               pac4jConfig.withWebContextFactory(_ =>
-                ZioHttpWebContext(request, sessionStore)
+                new ZioHttpWebContext(request)
               ),
               new ZioHttpSecurityAdapter,
               Option.empty[String].orNull,
@@ -47,48 +51,18 @@ object Pac4jMiddleware {
               Option.empty[String].orNull,
               null
             ) match {
-            case x: ZioHttpWebContext =>
-              val sessionId = extractSessionId(request)
+            case Some(x: ZioHttpWebContext) =>
+              val manager = new ProfileManager(
+                x,
+                pac4jConfig.getSessionStoreFactory.newSessionStore(null)
+              )
+              val profiles = manager.getProfiles.asScala
+                .map(_.asInstanceOf[CommonProfile])
+                .toList
+              ZIO.succeed(Option(profiles))
 
-              for {
-                securityContext <- sessionId match {
-                  case Some(id) =>
-                    for {
-                      _ <- ZIO.logInfo(s"Accessing ${id}")
-                      sessionData = zio.Unsafe.unsafe { implicit unsafe =>
-                        zio.Runtime.default.unsafe
-                          .run(sessionStore.get(id))
-                          .getOrThrow()
-                      }
-                      _ <- ZIO.logInfo(s"Got SessionData: ${sessionData}")
-                      userProfile = sessionData.flatMap(
-                        _.get("userProfile").collect {
-                          case profile: UserProfile => profile
-                        }
-                      )
-                      _ <- ZIO.logInfo(s"Got User: ${userProfile}")
-                    } yield SecurityContext(
-                      profile = userProfile,
-                      sessionId = Some(id),
-                      request = request
-                    )
-
-                  case None =>
-                    ZIO.succeed(
-                      SecurityContext(
-                        profile = None,
-                        sessionId = None,
-                        request = request
-                      )
-                    )
-                }
-                _ <- ZIO.logInfo(s"Authenticate: ${securityContext}")
-              } yield Option(securityContext)
-            case y: ZIO[Any, Nothing, Response] =>
-              val x = y.flatMap { response =>
-                ZIO.fail(response)
-              }
-              x
+            case y: Response =>
+              ZIO.fail(y)
           }
         } yield result).logError
       }
@@ -98,31 +72,29 @@ object Pac4jMiddleware {
       config: SecurityConfig,
       defaultUrl: String = "/",
       renewSession: Boolean = false
-  ): Routes[SessionStore, Nothing] = {
+  ) = {
     Routes(
       Method.GET / "callback" -> handler { (req: Request) =>
         (for {
           _ <- ZIO.logInfo("Got CALLBACK")
-          sessionStore <- ZIO.service[SessionStore]
-          pac4jConfig <- ZIO.attempt(buildPac4jConfig(config))
+          pac4jConfig <- buildPac4jConfig(config)
           callbackLogic <- ZIO
             .attempt {
-              FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(
-                pac4jConfig
-              )
               pac4jConfig.getCallbackLogic()
             }
-          response <- callbackLogic
-            .perform(
-              pac4jConfig.withWebContextFactory(_ =>
-                ZioHttpWebContext(req, sessionStore)
-              ),
-              defaultUrl,
-              renewSession,
-              /* defaultClient*/ null,
-              null
-            )
-            .asInstanceOf[ZIO[Any, Nothing, Response]]
+          response <- ZIO.succeed(
+            callbackLogic
+              .perform(
+                pac4jConfig.withWebContextFactory(_ =>
+                  new ZioHttpWebContext(req)
+                ),
+                defaultUrl,
+                renewSession,
+                /* defaultClient*/ null,
+                null
+              )
+              .asInstanceOf[Response]
+          )
           _ <- ZIO.logInfo(s"Got CALLBACK response: ${response}")
         } yield response).logError.orDie
       }
@@ -136,23 +108,19 @@ object Pac4jMiddleware {
       localLogout: Boolean = true,
       destroySession: Boolean = true,
       centralLogout: Boolean = false
-  ): Routes[SessionStore, Nothing] = {
+  ) = {
     Routes(
       Method.GET / "logout" -> handler { (req: Request) =>
         (for {
           _ <- ZIO.logInfo("Got AUTHENTICATION Middleware")
-          sessionStore <- ZIO.service[SessionStore]
-          pac4jConfig <- ZIO.attempt(buildPac4jConfig(config))
+          pac4jConfig <- buildPac4jConfig(config)
           logoutLogic <- ZIO.attempt {
-            FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(
-              pac4jConfig
-            )
             pac4jConfig.getLogoutLogic()
           }
-          response <- logoutLogic
+          response = logoutLogic
             .perform(
               pac4jConfig.withWebContextFactory(_ =>
-                ZioHttpWebContext(req, sessionStore)
+                new ZioHttpWebContext(req)
               ),
               defaultUrl,
               logoutUrlPattern.orNull,
@@ -161,59 +129,37 @@ object Pac4jMiddleware {
               centralLogout,
               null
             )
-            .asInstanceOf[ZIO[Any, Nothing, Response]]
+            .asInstanceOf[Response]
           _ <- ZIO.logInfo(s"Got LOGOUT response: ${response}")
         } yield response).logError.orDie
       }
     )
   }
 
-  private def extractSessionId(request: Request): Option[String] = {
-    request.cookie("JSESSIONID").map(_.content)
-  }
+  private def buildPac4jConfig(securityConfig: SecurityConfig) = {
 
-  private def createDemoProfile(clientName: String): UserProfile = {
-    import org.pac4j.core.profile.CommonProfile
-    val profile = new CommonProfile()
+    for {
+      sessionRepository <- ZIO.service[SessionRepository]
+      config <- ZIO.succeed {
+        val config = new Config()
+        config.setSessionStoreFactory((parameters: FrameworkParameters) => {
+          new ZioSessionStore(
+            sessionRepository,
+            Runtime.default
+          )()
+        })
+        config.setHttpActionAdapter(new ZioHttpActionAdapter)
+        config.setSecurityLogic(new DefaultSecurityLogic())
+        config.setCallbackLogic(new DefaultCallbackLogic())
+        config.setLogoutLogic(new DefaultLogoutLogic())
+        config.setProfileManagerFactory(ProfileManagerFactory.DEFAULT)
 
-    clientName match {
-      case "GoogleOidcClient" =>
-        profile.setId("google-demo-user-123")
-        profile.addAttribute("email", "demo.user@gmail.com")
-        profile.addAttribute("name", "Demo User")
-        profile.addAttribute("provider", "Google")
-        profile.addAttribute("role", "user")
-      case "GitHubClient" =>
-        profile.setId("github-demo-user-456")
-        profile.addAttribute("email", "demo.user@company.com")
-        profile.addAttribute("name", "Demo Developer")
-        profile.addAttribute("provider", "GitHub")
-        profile.addAttribute("role", "admin")
-      case _ =>
-        profile.setId("demo-user-789")
-        profile.addAttribute("email", "demo.user@example.org")
-        profile.addAttribute("name", "Demo Person")
-        profile.addAttribute("provider", "Unknown")
-        profile.addAttribute("role", "user")
-    }
-
-    profile
-  }
-
-  private def buildPac4jConfig(securityConfig: SecurityConfig): Config = {
-    val config = new Config()
-
-    config.setSessionStoreFactory(ZioHttpSessionStoreFactory)
-    config.setHttpActionAdapter(new ZioHttpActionAdapter)
-    config.setSecurityLogic(new DefaultSecurityLogic())
-    config.setCallbackLogic(new DefaultCallbackLogic())
-    config.setLogoutLogic(new DefaultLogoutLogic())
-
-    securityConfig.clients.foreach { client =>
-      config.addClient(client)
-    }
-
-    config
+        securityConfig.clients.foreach { client =>
+          config.addClient(client)
+        }
+        config
+      }
+    } yield config
   }
 
 }

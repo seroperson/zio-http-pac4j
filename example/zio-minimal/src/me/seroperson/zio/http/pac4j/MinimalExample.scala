@@ -8,6 +8,8 @@ import org.pac4j.oauth.client.Google2Client
 import zio.logging.slf4j.bridge.Slf4jBridge
 import zio.logging.LogFilter
 import org.pac4j.oauth.client.GitHubClient
+import org.pac4j.core.profile.CommonProfile
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
 
 object MinimalExample extends ZIOAppDefault {
 
@@ -21,24 +23,24 @@ object MinimalExample extends ZIOAppDefault {
 
   val securityConfig = {
     val googleClient = new Google2Client(
-      "",
-      ""
+      "765286948072-prc9dq0j47j5onf72m936fe509qnbllh.apps.googleusercontent.com",
+      "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"
     )
     googleClient.setCallbackUrl("http://localhost:8080/callback")
 
     val githubClient = new GitHubClient(
-      "",
-      ""
+      "Ov23lirOtiGTMrSSQOX7",
+      "c80fcb7e2ee8f674f5873e1fea0ec91114e4224f"
     )
     githubClient.setCallbackUrl("http://localhost:8080/callback")
 
     SecurityConfig(
-      clients = List( /*googleClient,*/ githubClient)
+      clients = List(googleClient, githubClient)
     )
   }
 
   val authMiddleware =
-    Pac4jMiddleware.middleware(securityConfig, isProtgected = false)
+    Pac4jMiddleware.middleware(securityConfig, isProtected = false)
 
   import zio.http.template._
   val publicRoutes = Routes(
@@ -52,12 +54,6 @@ object MinimalExample extends ZIOAppDefault {
             h1("zio-http-pac4j Minimal Example"),
             ol(
               li(
-                a(href := "/auth/login", "Initiate Google Login")
-              ),
-              li(
-                a(href := "/callback", "Callback handler")
-              ),
-              li(
                 a(href := "/profile", "Protected profile")
               ),
               li(
@@ -67,28 +63,7 @@ object MinimalExample extends ZIOAppDefault {
           )
         )
       )
-    ),
-    Method.GET / "auth" / "login" -> handler { (req: Request) =>
-      val clientNames = securityConfig.clients.map(_.getName).mkString(", ")
-      Response.html(
-        html(
-          head(
-            title("Login")
-          ),
-          body(
-            h1("Login"),
-            p(
-              "In a real implementation, Pac4jMiddleware.authenticate() would redirect to the OAuth provider."
-            ),
-            p(
-              a(href := "/", "Back to Home"),
-              " | ",
-              a(href := "/callback", "Simulate Callback")
-            )
-          )
-        )
-      )
-    }
+    )
   )
 
   // Protected routes using the authentication middleware
@@ -97,8 +72,8 @@ object MinimalExample extends ZIOAppDefault {
       Method.GET / "profile" -> Handler.fromFunctionZIO { (req: Request) =>
         for {
           _ <- ZIO.logDebug("Inside of route")
-          context <- ZIO.service[SecurityContext]
-          profileInfo = context.profile match {
+          profile <- ZIO.service[List[CommonProfile]].map(_.headOption)
+          profileInfo = profile match {
             case Some(user) =>
               s"✅ Authenticated user: ${user.getId}"
             case None =>
@@ -137,6 +112,6 @@ object MinimalExample extends ZIOAppDefault {
     _ <- ZIO.logDebug("Starting Minimal Example on http://localhost:8080")
     _ <- Server
       .serve(allRoutes)
-      .provide(Server.default, SessionStore.live)
+      .provide(Server.default, InMemorySessionRepository.live)
   } yield ()
 }
