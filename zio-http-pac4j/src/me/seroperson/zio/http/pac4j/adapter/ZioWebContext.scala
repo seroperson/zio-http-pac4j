@@ -1,4 +1,4 @@
-package me.seroperson.zio.http.pac4j
+package me.seroperson.zio.http.pac4j.adapter
 
 import zio._
 import org.pac4j.core.context.WebContext
@@ -21,11 +21,11 @@ import zio.http.Body
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class ZioHttpWebContext(
+class ZioWebContext(
     private var request: Request
 ) extends WebContext {
 
-  val logger: Logger = LoggerFactory.getLogger(getClass());
+  private val logger: Logger = LoggerFactory.getLogger(getClass());
 
   private def unsafeRun[T](task: Task[T]): T = {
     Unsafe.unsafe { implicit unsafe =>
@@ -38,33 +38,31 @@ class ZioHttpWebContext(
   private var response: Response = Response()
   private var attributes = scala.collection.mutable.Map[String, AnyRef]()
 
-  type Pac4jUserProfiles = java.util.LinkedHashMap[String, CommonProfile]
-
   override def getRequestParameter(name: String): Optional[String] = {
     if (request.hasFormUrlencodedContentType) {
       logger.debug(
         s"getRequestParameter: Getting from Url Encoded Form name=$name"
       )
-      val x = unsafeRun(request.body.asURLEncodedForm)
-      val y = x
+      unsafeRun(request.body.asURLEncodedForm)
         .get(name)
         .flatMap(_.stringValue)
         .orElse(request.queryParameters.queryParam(name))
-      Optional.ofNullable(y.orNull)
+        .toJava
     } else {
       logger.debug(s"getRequestParameter: Getting from query params name=$name")
-      Optional.ofNullable(request.queryParameters.queryParam(name).orNull)
+      request.queryParameters.queryParam(name).toJava
     }
   }
 
   override def getRequestParameters: java.util.Map[String, Array[String]] = {
     if (request.hasFormUrlencodedContentType) {
       logger.debug("getRequestParameters: Getting from Url Encoded Form")
-      val x = unsafeRun(request.body.asURLEncodedForm)
-      val values = x.map.values.flatMap { a =>
-        a.stringValue.map(value => (a.name, Array(value)))
-      }.toMap
-      values.asJava
+      unsafeRun(request.body.asURLEncodedForm).map.values
+        .flatMap { a =>
+          a.stringValue.map(value => (a.name, Array(value)))
+        }
+        .toMap
+        .asJava
       /*UrlForm.decodeString(Charset.`UTF-8`)(getRequestContent) match {
         case Left(err) => throw new Exception(err.toString)
         case Right(urlForm) =>
@@ -128,7 +126,12 @@ class ZioHttpWebContext(
   override def isSecure: Boolean =
     request.url.scheme.exists(_.isSecure.exists(identity))
 
-  override def getFullRequestURL: String = request.url.encode
+  override def getFullRequestURL: String = {
+    logger.debug(
+      s"getFullRequestURL: ${request.url.encode} / ${request.url} / ${request.path} / ${request}"
+    )
+    request.url.encode
+  }
 
   override def getRequestCookies: java.util.Collection[Cookie] = {
     logger.debug("getRequestCookies")
@@ -165,17 +168,21 @@ class ZioHttpWebContext(
     response = response.addCookie(zioCookie)
   }
 
-  def removeResponseCookie(name: String): Unit = {
-    logger.debug(s"removeResponseCookie $name")
-    response = response.addCookie(zio.http.Cookie.clear(name))
-  }
-
   override def getPath: String = request.url.path.encode
 
-  override lazy val getRequestContent: String =
+  override def getRequestContent: String =
     unsafeRun(request.body.asString)
 
   override def getProtocol: String = request.url.scheme.get.encode
+
+  override def getResponseHeader(name: String): Optional[String] =
+    Optional.ofNullable(
+      response.headers.get(name).orNull
+    )
+
+  private def modifyResponse(f: Response => Response): Unit = {
+    response = f(response)
+  }
 
   def setResponseStatus(code: Int): Unit = {
     logger.debug(s"setResponseStatus $code")
@@ -198,19 +205,13 @@ class ZioHttpWebContext(
     }
   }
 
-  def modifyResponse(f: Response => Response): Unit = {
-    response = f(response)
+  def removeResponseCookie(name: String): Unit = {
+    logger.debug(s"removeResponseCookie $name")
+    response = response.addCookie(zio.http.Cookie.clear(name))
   }
 
   def getRequest: Request = request
 
   def getResponse: Response = response
 
-  override def getResponseHeader(name: String): Optional[String] =
-    Optional.ofNullable(
-      response.headers.get(name).orNull
-    )
-
 }
-
-object ZioHttpWebContext {}

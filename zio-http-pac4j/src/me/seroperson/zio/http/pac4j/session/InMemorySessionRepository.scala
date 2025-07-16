@@ -7,7 +7,9 @@ import zio.ZIO
 import zio.ZLayer
 
 class InMemorySessionRepository extends SessionRepository {
+
   import scala.collection.concurrent.{Map => ConcurrentMap}
+
   private val cache =
     scala.collection.concurrent.TrieMap[String, Map[String, AnyRef]]()
 

@@ -1,4 +1,4 @@
-package me.seroperson.zio.http.pac4j
+package me.seroperson.zio.http.pac4j.adapter
 
 import org.pac4j.core.http.adapter.HttpActionAdapter
 import org.pac4j.core.context.WebContext
@@ -10,10 +10,11 @@ import zio.http.Status
 import org.pac4j.core.exception.http.OkAction
 import zio.http.MediaType
 import zio.ZIO
+import zio.ZLayer
 
 class ZioHttpActionAdapter extends HttpActionAdapter {
   override def adapt(action: HttpAction, context: WebContext): AnyRef = {
-    val hContext = context.asInstanceOf[ZioHttpWebContext]
+    val hContext = context.asInstanceOf[ZioWebContext]
     action match {
       case fa: FoundAction =>
         hContext.setResponseStatus(Status.Found.code)
@@ -39,4 +40,9 @@ class ZioHttpActionAdapter extends HttpActionAdapter {
     hContext.getResponse
   }
 
+}
+
+object ZioHttpActionAdapter {
+  lazy val live: ZLayer[Any, Nothing, HttpActionAdapter] =
+    ZLayer.fromFunction(() => new ZioHttpActionAdapter())
 }

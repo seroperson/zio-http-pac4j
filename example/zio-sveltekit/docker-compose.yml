@@ -1,0 +1,113 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:8080
+      - --log.level=INFO
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./../../
+      dockerfile_inline: |
+        FROM openjdk:24-jdk-bookworm AS builder
+
+        # Set working directory
+        WORKDIR /app
+
+        # Copy source code
+        COPY . .
+
+        # Install dependencies
+        RUN /app/mill example.zio-minimal[2.13.16].assembly
+
+        # Production stage with nginx
+        FROM amazoncorretto:24-headless
+
+        # Copy built files from builder stage
+        COPY --from=builder /app/out/example/zio-minimal/2.13.16/assembly.dest/out.jar /app/out.jar
+
+        # Expose port 8080
+        EXPOSE 8080
+
+        # Start nginx
+        CMD ["java", "-jar", "/app/out.jar"]
+
+    container_name: zio-backend
+    environment:
+      - BASE_URL=http://localhost:8080
+    env_file:
+      - ./backend/.env
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+    depends_on:
+      - traefik
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile_inline: |
+        # Multi-stage build for SvelteKit frontend
+        FROM oven/bun:1 AS builder
+
+        # Set working directory
+        WORKDIR /app
+
+        # Copy package files
+        COPY package.json bun.lock ./
+
+        # Install dependencies
+        RUN bun install --frozen-lockfile
+
+        # Copy source code
+        COPY . .
+
+        # Build the application
+        RUN bun run build
+
+        # Production stage with nginx
+        FROM nginx:alpine
+
+        # Copy built files from builder stage
+        COPY --from=builder /app/build /usr/share/nginx/html
+
+        # Copy custom nginx configuration
+        COPY nginx.conf /etc/nginx/nginx.conf
+
+        # Expose port 8080
+        EXPOSE 8080
+
+        # Start nginx
+        CMD ["nginx", "-g", "daemon off;"]
+
+    container_name: svelte-frontend
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+    depends_on:
+      - traefik
+
+networks:
+  app-network:
+    driver: bridge

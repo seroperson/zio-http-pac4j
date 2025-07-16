@@ -3,7 +3,7 @@ package me.seroperson.zio.http.pac4j.session
 import zio._
 import zio.http._
 import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.{SessionStore => Pac4jSessionStore}
+import org.pac4j.core.context.session.SessionStore
 import java.util.{Map => JMap, Collection => JCollection, Optional}
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -11,21 +11,20 @@ import scala.collection.StringOps._
 import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.context.FrameworkParameters
 import org.pac4j.core.util.Pac4jConstants
-import me.seroperson.zio.http.pac4j.ZioHttpWebContext
 import org.pac4j.core.context.{Cookie, WebContext}
 import zio.http.Cookie.SameSite
+import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
+import me.seroperson.zio.http.pac4j.config.SecurityConfig
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ZioSessionStore(
     sessionRepository: SessionRepository,
-    runtime: Runtime[Any]
-)(
-    maxAge: Option[Int] = None,
-    domain: Option[String] = None,
-    path: Option[String] = Some("/"),
-    secure: Boolean = false,
-    httpOnly: Boolean = false,
-    sameSite: Option[SameSite] = None
-) extends Pac4jSessionStore {
+    config: SecurityConfig
+) extends SessionStore {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass())
+  private val runtime = Runtime.default
 
   private def unsafeRun[T](task: Task[T]): T = {
     Unsafe.unsafe { implicit unsafe =>
@@ -48,7 +47,7 @@ class ZioSessionStore(
           ) match {
             case Some(cookie) => Option(cookie.getValue)
             case None if createSession =>
-              Some(createSessionId(context.asInstanceOf[ZioHttpWebContext]))
+              Some(createSessionId(context.asInstanceOf[ZioWebContext]))
             case None => None
           }
       }
@@ -56,40 +55,46 @@ class ZioSessionStore(
     id.toJava
   }
 
-  private def createSessionId(context: ZioHttpWebContext): String = {
+  private def createSessionId(context: ZioWebContext): String = {
     val id = unsafeRun(sessionRepository.generateRandomUuid()).toString
     context.setRequestAttribute(Pac4jConstants.SESSION_ID, id)
 
     val cookie = new Cookie(Pac4jConstants.SESSION_ID, id)
-    maxAge.foreach(cookie.setMaxAge)
-    domain.foreach(cookie.setDomain)
-    path.foreach(cookie.setPath)
-    cookie.setSecure(secure)
-    cookie.setHttpOnly(httpOnly)
-    sameSite.foreach(s => cookie.setSameSitePolicy(s.toString())) // todo ?
+    config.sessionCookie.maxAge.foreach(cookie.setMaxAge)
+    config.sessionCookie.domain.foreach(cookie.setDomain)
+    config.sessionCookie.path.foreach(cookie.setPath)
+    cookie.setSecure(config.sessionCookie.secure)
+    cookie.setHttpOnly(config.sessionCookie.httpOnly)
+    config.sessionCookie.sameSite.foreach(s =>
+      cookie.setSameSitePolicy(s.toString())
+    ) // todo ?
 
     context.addResponseCookie(cookie)
     id
   }
 
   override def get(context: WebContext, key: String): Optional[AnyRef] = {
-    val sessionId = getSessionId(context, createSession = false)
-    sessionId.flatMap[AnyRef] { sid =>
-      val value = unsafeRun(sessionRepository.get(sid))
-        .getOrElse(Map.empty)
-        .get(key)
-        .toJava
-      // logger.debug(s"get sessionId: $sessionId key: $key")
-      value
-    }
+    getSessionId(context, createSession = false)
+      .flatMap[AnyRef] { sid =>
+        val value = unsafeRun(sessionRepository.get(sid))
+          .getOrElse(Map.empty)
+          .get(key)
+          .toJava
+        // logger.debug(s"get key from store: $key, $value")
+        value
+      }
   }
 
   override def set(context: WebContext, key: String, value: AnyRef): Unit = {
     val sessionId = getSessionId(context, createSession = true).get()
     if (value == null) {
+      // logger.debug(s"unsetting $key")
       unsafeRun(sessionRepository.remove(sessionId, key))
-    } else
+    } else {
+      // logger.debug(s"setting $key to $value")
       unsafeRun(sessionRepository.set(sessionId, key, value))
+    }
+
   }
 
   override def destroySession(context: WebContext): Boolean = {
@@ -99,7 +104,7 @@ class ZioSessionStore(
     if (deleted) {
       context.setRequestAttribute(Pac4jConstants.SESSION_ID, null)
       context
-        .asInstanceOf[ZioHttpWebContext]
+        .asInstanceOf[ZioWebContext]
         .removeResponseCookie(Pac4jConstants.SESSION_ID)
     }
     deleted
@@ -113,7 +118,7 @@ class ZioSessionStore(
   override def buildFromTrackableSession(
       context: WebContext,
       trackableSession: Any
-  ): Optional[Pac4jSessionStore] = {
+  ): Optional[SessionStore] = {
     context.setRequestAttribute(
       Pac4jConstants.SESSION_ID,
       trackableSession.toString
@@ -129,7 +134,7 @@ class ZioSessionStore(
     destroySession(context)
 
     val newSessionId = createSessionId(
-      context.asInstanceOf[ZioHttpWebContext]
+      context.asInstanceOf[ZioWebContext]
     )
     if (oldData.isPresent) {
       unsafeRun(
@@ -140,4 +145,11 @@ class ZioSessionStore(
     true
   }
 
+}
+
+object ZioSessionStore {
+
+  lazy val live
+      : ZLayer[SessionRepository & SecurityConfig, Nothing, SessionStore] =
+    ZLayer.derive[ZioSessionStore]
 }
