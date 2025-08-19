@@ -21,7 +21,7 @@ services:
     build:
       context: ./../../
       dockerfile_inline: |
-        FROM openjdk:24-jdk-bookworm AS builder
+        FROM sbtscala/scala-sbt:graalvm-community-24.0.2_1.11.4_3.7.2 AS builder
 
         # Set working directory
         WORKDIR /app
@@ -30,13 +30,13 @@ services:
         COPY . .
 
         # Install dependencies
-        RUN /app/mill example.zio-minimal[2.13.16].assembly
+        RUN sbt zio-sveltekit-backend/assembly
 
         # Production stage with nginx
         FROM amazoncorretto:24-headless
 
         # Copy built files from builder stage
-        COPY --from=builder /app/out/example/zio-minimal/2.13.16/assembly.dest/out.jar /app/out.jar
+        COPY --from=builder /app/example/zio-sveltekit/backend/target/scala-2.13/out.jar /app/out.jar
 
         # Expose port 8080
         EXPOSE 8080

@@ -3,6 +3,9 @@ out/
 .bsp/
 mill.*
 
+# sbt output
+target/
+
 # IDE stuff
 .idea/
 .vscode/
@@ -11,3 +14,7 @@ mill.*
 # metals
 .metals/
 .bloop/
+
+# svelte
+node_modules/
+.svelte-kit/
