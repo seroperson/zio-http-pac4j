@@ -19,8 +19,14 @@ import me.seroperson.zio.http.pac4j.config.CallbackConfig
 import me.seroperson.zio.http.pac4j.config.LogoutConfig
 import zio.logging.ConsoleLoggerConfig
 import org.pac4j.core.profile.UserProfile
+import org.pac4j.http.client.direct.DirectFormClient
+import org.pac4j.http.client.indirect.FormClient
+import org.pac4j.core.credentials.authenticator.Authenticator
+import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator
 
 object ZioApi extends ZIOAppDefault {
+
+  val baseUrl = sys.env.getOrElse("BASE_URL", "http://localhost:9000")
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers >+>
@@ -55,10 +61,48 @@ object ZioApi extends ZIOAppDefault {
                 )
               ),
               li(
+                a(
+                  href := "/api/login?provider=FormClient",
+                  "Login using a form"
+                )
+              ),
+              li(
                 a(href := "/profile", "Protected profile")
               ),
               li(
-                a(href := "/logout", "Logout")
+                a(href := "/api/logout", "Logout")
+              )
+            )
+          )
+        )
+      )
+    ),
+    Method.GET / "loginForm" -> handler(
+      Response.html(
+        html(
+          head(
+            title("Login using a form")
+          ),
+          body(
+            h1("Login using a form"),
+            form(
+              actionAttr := s"$baseUrl/api/callback?client_name=FormClient",
+              methodAttr := "POST",
+              input(
+                typeAttr := "text",
+                nameAttr := "username",
+                valueAttr := ""
+              ),
+              p(),
+              input(
+                typeAttr := "password",
+                nameAttr := "password",
+                valueAttr := ""
+              ),
+              p(),
+              input(
+                typeAttr := "submit",
+                valueAttr := "Submit"
               )
             )
           )
@@ -67,7 +111,7 @@ object ZioApi extends ZIOAppDefault {
     ),
     Method.GET / "profile" -> Handler.fromFunctionZIO { (req: Request) =>
       for {
-        profile <- ZIO.service[UserProfile].map(_.asInstanceOf[CommonProfile])
+        profile <- ZIO.service[UserProfile /* CommonProfile */ ]
         response <- ZIO.succeed(
           Response.html(
             html(
@@ -76,7 +120,7 @@ object ZioApi extends ZIOAppDefault {
               ),
               body(
                 h1("User Profile"),
-                p(s"Status: ✅ Authenticated user: $profile"),
+                p(s"Status: ✅ Authenticated user: ${profile}"),
                 p(
                   a(href := "/", "Back to Home"),
                   " | ",
@@ -93,14 +137,12 @@ object ZioApi extends ZIOAppDefault {
   val allRoutes =
     (Pac4jMiddleware.callback ++
       Pac4jMiddleware.logout ++
-      Pac4jMiddleware.login(clients = List("Google2Client", "GitHubClient")) ++
+      Pac4jMiddleware
+        .login(clients = List("Google2Client", "GitHubClient", "FormClient")) ++
       userRoutes)
 
   override val run = for {
-    _ <- ZIO.logInfo("Starting on http://localhost:9000")
-    baseUrl <- ZIO.succeed(
-      sys.env.getOrElse("BASE_URL", "http://localhost:9000")
-    )
+    _ <- ZIO.logInfo(s"Starting on $baseUrl")
     _ <- Server
       .serve(allRoutes)
       .provide(
@@ -118,6 +160,11 @@ object ZioApi extends ZIOAppDefault {
                 new GitHubClient(
                   sys.env.get("GITHUB_CLIENT_ID").getOrElse(""),
                   sys.env.get("GITHUB_CLIENT_SECRET").getOrElse("")
+                ).setCallbackUrl(s"$baseUrl/api/callback")
+              }, {
+                new FormClient(
+                  /* loginUrl = */ s"$baseUrl/loginForm",
+                  new SimpleTestUsernamePasswordAuthenticator()
                 ).setCallbackUrl(s"$baseUrl/api/callback")
               }
             ),

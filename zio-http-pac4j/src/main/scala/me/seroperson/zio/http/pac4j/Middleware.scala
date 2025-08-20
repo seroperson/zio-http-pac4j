@@ -44,26 +44,32 @@ object Pac4jMiddleware {
         (for {
           pac4jConfig <- buildPac4jConfig(req)
           securityGrantedAccess <- ZIO.service[SecurityGrantedAccessAdapter]
+          webContext <- ZIO.attempt(
+            pac4jConfig
+              .getWebContextFactory()
+              .newContext(null: FrameworkParameters)
+          )
+          sessionStore <- ZIO.attempt(
+            pac4jConfig
+              .getSessionStoreFactory()
+              .newSessionStore(null: FrameworkParameters)
+          )
+          sessionId <- ZIO.attempt {
+            sessionStore
+              .getSessionId(webContext, false)
+              .toScala
+          }
           result <- ZIO
             .attempt {
               pac4jConfig
                 .getProfileManagerFactory()
-                .apply(
-                  pac4jConfig
-                    .getWebContextFactory()
-                    .newContext(null: FrameworkParameters),
-                  pac4jConfig
-                    .getSessionStoreFactory()
-                    .newSessionStore(null: FrameworkParameters)
-                )
+                .apply(webContext, sessionStore)
                 .getProfile
                 .toScala
             }
-            .logError
-            .mapError { ex =>
-              Response.internalServerError(ex.getMessage)
-            }
-        } yield result).logError
+        } yield result).mapError { ex =>
+          Response.internalServerError(ex.getMessage)
+        }.logError
     )
 
   def securityFilter(

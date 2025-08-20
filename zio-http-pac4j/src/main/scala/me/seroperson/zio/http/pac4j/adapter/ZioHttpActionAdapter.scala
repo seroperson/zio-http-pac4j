@@ -11,6 +11,8 @@ import org.pac4j.core.exception.http.OkAction
 import zio.http.MediaType
 import zio.ZIO
 import zio.ZLayer
+import org.pac4j.core.credentials.UsernamePasswordCredentials
+import org.pac4j.core.credentials.extractor.FormExtractor
 
 class ZioHttpActionAdapter extends HttpActionAdapter {
   override def adapt(action: HttpAction, context: WebContext): AnyRef = {

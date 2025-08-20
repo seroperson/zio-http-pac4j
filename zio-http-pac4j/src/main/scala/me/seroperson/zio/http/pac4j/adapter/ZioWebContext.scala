@@ -22,21 +22,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class ZioWebContext(
-    private var request: Request
+    private val request: Request
 ) extends WebContext {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass());
-
-  private def unsafeRun[T](task: Task[T]): T = {
-    Unsafe.unsafe { implicit unsafe =>
-      Runtime.default.unsafe
-        .run(task)
-        .getOrThrowFiberFailure()
-    }
-  }
-
-  private var response: Response = Response()
-  private var attributes = scala.collection.mutable.Map[String, AnyRef]()
+  private val attributes = scala.collection.mutable.Map[String, AnyRef]()
+  private var response = Response()
 
   override def getRequestParameter(name: String): Optional[String] = {
     if (request.hasFormUrlencodedContentType) {
@@ -165,7 +156,7 @@ class ZioWebContext(
       sameSite = sameSite
     )
 
-    response = response.addCookie(zioCookie)
+    modifyResponse(_.addCookie(zioCookie))
   }
 
   override def getPath: String = request.url.path.encode
@@ -179,10 +170,6 @@ class ZioWebContext(
     Optional.ofNullable(
       response.headers.get(name).orNull
     )
-
-  private def modifyResponse(f: Response => Response): Unit = {
-    response = f(response)
-  }
 
   def setResponseStatus(code: Int): Unit = {
     logger.debug(s"setResponseStatus $code")
@@ -207,11 +194,23 @@ class ZioWebContext(
 
   def removeResponseCookie(name: String): Unit = {
     logger.debug(s"removeResponseCookie $name")
-    response = response.addCookie(zio.http.Cookie.clear(name))
+    modifyResponse(_.addCookie(zio.http.Cookie.clear(name)))
   }
 
   def getRequest: Request = request
 
   def getResponse: Response = response
+
+  private def modifyResponse(f: Response => Response): Unit = {
+    response = f(response)
+  }
+
+  private def unsafeRun[T](task: Task[T]): T = {
+    Unsafe.unsafe { implicit unsafe =>
+      Runtime.default.unsafe
+        .run(task)
+        .getOrThrowFiberFailure()
+    }
+  }
 
 }

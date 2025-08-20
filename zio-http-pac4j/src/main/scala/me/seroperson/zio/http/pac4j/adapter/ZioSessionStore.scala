@@ -51,7 +51,7 @@ class ZioSessionStore(
             case None => None
           }
       }
-    // logger.debug(s"getOrCreateSessionId - $id")
+    logger.debug(s"getOrCreateSessionId - $id")
     id.toJava
   }
 
@@ -80,7 +80,7 @@ class ZioSessionStore(
           .getOrElse(Map.empty)
           .get(key)
           .toJava
-        // logger.debug(s"get key from store: $key, $value")
+        logger.debug(s"get key from store: $key, $value")
         value
       }
   }
@@ -88,10 +88,10 @@ class ZioSessionStore(
   override def set(context: WebContext, key: String, value: AnyRef): Unit = {
     val sessionId = getSessionId(context, createSession = true).get()
     if (value == null) {
-      // logger.debug(s"unsetting $key")
+      logger.debug(s"unsetting $key")
       unsafeRun(sessionRepository.remove(sessionId, key))
     } else {
-      // logger.debug(s"setting $key to $value")
+      logger.debug(s"setting $key to $value")
       unsafeRun(sessionRepository.set(sessionId, key, value))
     }
 
@@ -111,7 +111,7 @@ class ZioSessionStore(
   }
 
   override def getTrackableSession(context: WebContext): Optional[AnyRef] = {
-    // logger.debug(s"getTrackableSession")
+    logger.debug(s"getTrackableSession")
     getSessionId(context, false).asInstanceOf[Optional[AnyRef]]
   }
 
@@ -141,7 +141,7 @@ class ZioSessionStore(
         sessionRepository.update(newSessionId, oldData.get)
       )
     }
-    // logger.debug(s"Renewed session: $oldSessionId -> $newSessionId")
+    logger.debug(s"Renewed session: $oldSessionId -> $newSessionId")
     true
   }
 

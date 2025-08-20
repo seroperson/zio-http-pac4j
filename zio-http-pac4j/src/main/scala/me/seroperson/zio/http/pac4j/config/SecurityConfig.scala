@@ -25,9 +25,16 @@ case class CallbackConfig(
     defaultClient: String = null
 )
 
+/*
+ * @param defaultUrl the default url
+ * @param logoutUrlPattern the logout url pattern, redirects there on logout
+ * @param localLogout whether a local logout is required
+ * @param destroySession whether the web session must be destroyed
+ * @param centralLogout whether a central logout is required
+ * */
 case class LogoutConfig(
     defaultUrl: String = "/",
-    logoutUrlPattern: Option[String] = None,
+    logoutUrlPattern: Option[String] = Some("api/logout"),
     localLogout: Boolean = true,
     destroySession: Boolean = true,
     centralLogout: Boolean = false
