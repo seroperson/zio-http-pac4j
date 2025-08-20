@@ -60,9 +60,9 @@ object ZioApi extends ZIOAppDefault {
       userRoutes)
 
   override val run = for {
-    _ <- ZIO.logInfo("Starting on http://localhost:8080")
+    _ <- ZIO.logInfo("Starting on http://localhost:9000")
     baseUrl <- ZIO.succeed(
-      sys.env.getOrElse("BASE_URL", "http://localhost:8080")
+      sys.env.getOrElse("BASE_URL", "http://localhost:9000")
     )
     _ <- Server
       .serve(allRoutes)

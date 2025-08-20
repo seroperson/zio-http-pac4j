@@ -11,12 +11,10 @@ val zioHttpVersion = "3.4.0"
 val pac4jVersion = "6.2.0"
 val scalaTestVersion = "3.2.19"
 
-ThisBuild / assemblyMergeStrategy := { (_: String) =>
-  MergeStrategy.first
-}
-
 // Common settings
 lazy val commonSettings = Seq(
+  // pac4j repositories
+  resolvers += "JBoss Repository" at "https://repository.jboss.org/nexus/content/repositories/public/",
   scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",
@@ -25,6 +23,19 @@ lazy val commonSettings = Seq(
     "UTF-8",
     "-feature"
   )
+)
+
+lazy val runnableSettings = Seq(
+  // Kill the application if requested
+  Global / cancelable := true,
+  // Allows to run the application not in the sbt's jvm itself
+  run / fork := true,
+  // GraalJS tests sometimes fail without forking
+  Test / fork := true,
+  // Forward stdin from the sbt shell to the application
+  connectInput / run := true,
+  // don't publish examples
+  publish / skip := true
 )
 
 // Core dependencies
@@ -88,24 +99,21 @@ lazy val `zio-http-pac4j` = (project in file("zio-http-pac4j"))
 
 lazy val `zio-minimal` = (project in file("example/zio-minimal"))
   .dependsOn(`zio-http-pac4j`)
+  .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
+  .settings(runnableSettings)
   .settings(
-    libraryDependencies ++= coreDependencies ++ exampleDependencies,
-    assembly / assemblyJarName := "out.jar",
-    assemblyJarName := "out.jar",
-    Compile / mainClass := Some("ZioApi"),
-    publish / skip := true
+    libraryDependencies ++= coreDependencies ++ exampleDependencies
   )
 
 lazy val `zio-sveltekit-backend` =
   (project in file("example/zio-sveltekit/backend"))
     .dependsOn(`zio-http-pac4j`)
+    .enablePlugins(JavaAppPackaging)
     .settings(commonSettings)
+    .settings(runnableSettings)
     .settings(
-      libraryDependencies ++= coreDependencies ++ exampleDependencies,
-      assembly / assemblyJarName := "out.jar",
-      Compile / mainClass := Some("ZioApi"),
-      publish / skip := true
+      libraryDependencies ++= coreDependencies ++ exampleDependencies
     )
 
 // Root project

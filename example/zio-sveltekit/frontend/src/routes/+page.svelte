@@ -36,7 +36,7 @@
 				<Button
 					variant="outline"
 					class={cn('w-full')}
-					onclick={() => goto('http://localhost/api/logout')}>Logout</Button
+					onclick={() => goto('http://localhost:9000/api/logout')}>Logout</Button
 				>
 			</div>
 		{:else}
@@ -52,7 +52,7 @@
 						<Button
 							variant="outline"
 							class={cn('w-full gap-2')}
-							onclick={() => goto('http://localhost/api/login?provider=Google2Client')}
+							onclick={() => goto('http://localhost:9000/api/login?provider=Google2Client')}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -82,7 +82,7 @@
 						<Button
 							variant="outline"
 							class={cn('w-full gap-2')}
-							onclick={() => goto('http://localhost/api/login?provider=GitHubClient')}
+							onclick={() => goto('http://localhost:9000/api/login?provider=GitHubClient')}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 								<path

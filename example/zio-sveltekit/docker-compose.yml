@@ -2,16 +2,16 @@ version: "3.8"
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.5
     container_name: traefik
     command:
       - --api.insecure=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:8080
+      - --entrypoints.web.address=:9000
       - --log.level=INFO
     ports:
-      - "8080:8080"
+      - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -21,34 +21,21 @@ services:
     build:
       context: ./../../
       dockerfile_inline: |
-        FROM sbtscala/scala-sbt:graalvm-community-24.0.2_1.11.4_3.7.2 AS builder
-
-        # Set working directory
+        FROM sbtscala/scala-sbt:eclipse-temurin-24.0.1_9_1.11.4_3.7.2 AS builder
         WORKDIR /app
-
-        # Copy source code
         COPY . .
+        RUN apt-get update && apt-get install -y unzip
+        RUN sbt zio-sveltekit-backend/Universal/packageBin
+        RUN unzip example/zio-sveltekit/backend/target/universal/zio-sveltekit-backend-0.1.0.zip -d /app/zio-sveltekit-backend/
 
-        # Install dependencies
-        RUN sbt zio-sveltekit-backend/assembly
-
-        # Production stage with nginx
-        FROM amazoncorretto:24-headless
-
-        # Copy built files from builder stage
-        COPY --from=builder /app/example/zio-sveltekit/backend/target/scala-2.13/out.jar /app/out.jar
-
-        # Expose port 8080
+        FROM eclipse-temurin:24-jre
+        COPY --from=builder /app/zio-sveltekit-backend/zio-sveltekit-backend-0.1.0/ /app/zio-sveltekit-backend/
         EXPOSE 8080
-
-        # Start nginx
-        CMD ["java", "-jar", "/app/out.jar"]
+        CMD ["/app/zio-sveltekit-backend/bin/zio-sveltekit-backend"]
 
     container_name: zio-backend
-    environment:
-      - BASE_URL=http://localhost:8080
     env_file:
-      - ./backend/.env
+      - ../../.env
     networks:
       - app-network
     labels:
@@ -63,37 +50,16 @@ services:
     build:
       context: ./frontend
       dockerfile_inline: |
-        # Multi-stage build for SvelteKit frontend
         FROM oven/bun:1 AS builder
-
-        # Set working directory
         WORKDIR /app
-
-        # Copy package files
-        COPY package.json bun.lock ./
-
-        # Install dependencies
-        RUN bun install --frozen-lockfile
-
-        # Copy source code
         COPY . .
-
-        # Build the application
+        RUN bun install --frozen-lockfile
         RUN bun run build
 
-        # Production stage with nginx
         FROM nginx:alpine
-
-        # Copy built files from builder stage
         COPY --from=builder /app/build /usr/share/nginx/html
-
-        # Copy custom nginx configuration
         COPY nginx.conf /etc/nginx/nginx.conf
-
-        # Expose port 8080
-        EXPOSE 8080
-
-        # Start nginx
+        EXPOSE 80
         CMD ["nginx", "-g", "daemon off;"]
 
     container_name: svelte-frontend
@@ -104,7 +70,7 @@ services:
       - "traefik.http.routers.frontend.rule=Host(`localhost`)"
       - "traefik.http.routers.frontend.entrypoints=web"
       - "traefik.http.routers.frontend.priority=1"
-      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
     depends_on:
       - traefik
 
