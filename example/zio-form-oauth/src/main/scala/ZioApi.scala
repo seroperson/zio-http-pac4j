@@ -23,6 +23,7 @@ import org.pac4j.http.client.direct.DirectFormClient
 import org.pac4j.http.client.indirect.FormClient
 import org.pac4j.core.credentials.authenticator.Authenticator
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator
+import me.seroperson.zio.http.pac4j.config.LoginConfig
 
 object ZioApi extends ZIOAppDefault {
 
@@ -131,12 +132,12 @@ object ZioApi extends ZIOAppDefault {
           )
         )
       } yield response
-    } @@ Pac4jMiddleware.errorIfUnauthorized
+    } @@ Pac4jMiddleware.errorIfUnauthorizedWithProfile
   )
 
   val allRoutes =
-    (Pac4jMiddleware.callback ++
-      Pac4jMiddleware.logout ++
+    (Pac4jMiddleware.callback() ++
+      Pac4jMiddleware.logout() ++
       Pac4jMiddleware
         .login(clients = List("Google2Client", "GitHubClient", "FormClient")) ++
       userRoutes)
@@ -148,6 +149,7 @@ object ZioApi extends ZIOAppDefault {
       .provide(
         Server.defaultWithPort(9000),
         ZioPac4jDefaults.live,
+        InMemorySessionRepository.live,
         ZLayer.succeed {
           SecurityConfig(
             clients = List(
@@ -167,10 +169,7 @@ object ZioApi extends ZIOAppDefault {
                   new SimpleTestUsernamePasswordAuthenticator()
                 ).setCallbackUrl(s"$baseUrl/api/callback")
               }
-            ),
-            sessionCookie = SessionCookieConfig(),
-            callback = CallbackConfig(),
-            logout = LogoutConfig()
+            )
           )
         }
       )

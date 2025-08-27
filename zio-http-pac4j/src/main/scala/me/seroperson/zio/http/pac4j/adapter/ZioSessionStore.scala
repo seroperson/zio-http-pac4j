@@ -62,7 +62,7 @@ class ZioSessionStore(
     val cookie = new Cookie(Pac4jConstants.SESSION_ID, id)
     config.sessionCookie.maxAge.foreach(cookie.setMaxAge)
     config.sessionCookie.domain.foreach(cookie.setDomain)
-    config.sessionCookie.path.foreach(cookie.setPath)
+    config.sessionCookie.path.map(_.encode).foreach(cookie.setPath)
     cookie.setSecure(config.sessionCookie.secure)
     cookie.setHttpOnly(config.sessionCookie.httpOnly)
     config.sessionCookie.sameSite.foreach(s =>

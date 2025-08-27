@@ -9,8 +9,7 @@ import me.seroperson.zio.http.pac4j.session.ZioSessionStore
 
 object ZioPac4jDefaults {
 
-  lazy val live = InMemorySessionRepository.live >+>
-    ZioSecurityGrantedAccess.live >+>
+  lazy val live = ZioSecurityGrantedAccess.live >+>
     ZioHttpActionAdapter.live >+>
     ZioLogic.callbackLogic >+>
     ZioLogic.logoutLogic >+>

@@ -54,11 +54,6 @@ class ZioWebContext(
         }
         .toMap
         .asJava
-      /*UrlForm.decodeString(Charset.`UTF-8`)(getRequestContent) match {
-        case Left(err) => throw new Exception(err.toString)
-        case Right(urlForm) =>
-          urlForm.values.map(a => (a._1, a._2.iterator.toArray)).asJava
-      }*/
     } else {
       logger.debug("getRequestParameters: Getting from query params")
       request.queryParameters.map.map { case (k, v) =>
@@ -135,7 +130,7 @@ class ZioWebContext(
   override def addResponseCookie(cookie: Cookie): Unit = {
     logger.debug(s"addResponseCookie ${cookie}")
     val maxAge =
-      Option(cookie.getMaxAge).filter(_ != -1).map(_.toLong).map(_.seconds)
+      Option(cookie.getMaxAge).filter(_ != -1).map(_.toLong.seconds)
     val sameSite = Option(cookie.getSameSitePolicy()).map(_.toLowerCase()).map {
       case "strict" => SameSite.Strict
       case "lax"    => SameSite.Lax

@@ -21,6 +21,7 @@ import org.pac4j.core.engine.savedrequest.DefaultSavedRequestHandler
 import org.pac4j.core.profile.UserProfile
 import zio.logging.consoleLogger
 import zio.logging.ConsoleLoggerConfig
+import me.seroperson.zio.http.pac4j.config.LoginConfig
 
 object ZioApi extends ZIOAppDefault {
 
@@ -50,12 +51,12 @@ object ZioApi extends ZIOAppDefault {
           )
         )
       } yield response
-    } @@ Pac4jMiddleware.errorIfUnauthorized
+    } @@ Pac4jMiddleware.errorIfUnauthorizedWithProfile
   )
 
   val allRoutes =
-    (Pac4jMiddleware.callback ++
-      Pac4jMiddleware.logout ++
+    (Pac4jMiddleware.callback() ++
+      Pac4jMiddleware.logout() ++
       Pac4jMiddleware.login(clients = List("Google2Client", "GitHubClient")) ++
       userRoutes)
 
@@ -69,6 +70,7 @@ object ZioApi extends ZIOAppDefault {
       .provide(
         Server.defaultWithPort(8080),
         ZioPac4jDefaults.live,
+        InMemorySessionRepository.live,
         ZLayer.succeed {
           SecurityConfig(
             clients = List(
@@ -83,10 +85,7 @@ object ZioApi extends ZIOAppDefault {
                   sys.env.get("GITHUB_CLIENT_SECRET").getOrElse("")
                 ).setCallbackUrl(s"$baseUrl/api/callback")
               }
-            ),
-            sessionCookie = SessionCookieConfig(),
-            callback = CallbackConfig(),
-            logout = LogoutConfig()
+            )
           )
         }
       )

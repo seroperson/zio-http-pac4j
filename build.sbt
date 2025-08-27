@@ -50,7 +50,7 @@ lazy val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
   "dev.zio" %% "zio-test" % zioVersion % Test,
   "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-)
+) ++ exampleDependencies
 
 // Example dependencies
 lazy val exampleDependencies = Seq(
@@ -97,14 +97,15 @@ lazy val `zio-http-pac4j` = (project in file("zio-http-pac4j"))
     }
   )
 
-lazy val `zio-minimal` = (project in file("example/zio-minimal"))
-  .dependsOn(`zio-http-pac4j`)
-  .enablePlugins(JavaAppPackaging)
-  .settings(commonSettings)
-  .settings(runnableSettings)
-  .settings(
-    libraryDependencies ++= coreDependencies ++ exampleDependencies
-  )
+lazy val `zio-form-oauth` =
+  (project in file("example/zio-form-oauth"))
+    .dependsOn(`zio-http-pac4j`)
+    .enablePlugins(JavaAppPackaging)
+    .settings(commonSettings)
+    .settings(runnableSettings)
+    .settings(
+      libraryDependencies ++= coreDependencies ++ exampleDependencies
+    )
 
 lazy val `zio-sveltekit-backend` =
   (project in file("example/zio-sveltekit/backend"))
@@ -118,7 +119,11 @@ lazy val `zio-sveltekit-backend` =
 
 // Root project
 lazy val root = (project in file("."))
-  .aggregate(`zio-http-pac4j`, `zio-minimal`, `zio-sveltekit-backend`)
+  .aggregate(
+    `zio-http-pac4j`,
+    `zio-form-oauth`,
+    `zio-sveltekit-backend`
+  )
   .settings(
     publish / skip := true
   )
