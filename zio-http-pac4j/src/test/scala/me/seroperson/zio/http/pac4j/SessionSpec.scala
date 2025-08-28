@@ -1,38 +1,36 @@
 package me.seroperson.zio.http.pac4j
 
-import zio.test.Assertion._
-import zio.test._
-import zio.http._
-import zio._
-
-import org.pac4j.core.util.Pac4jConstants
-import zio.logging.consoleLogger
-
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-import me.seroperson.zio.http.pac4j.session.SessionRepository
-import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import me.seroperson.zio.http.pac4j.Pac4jMiddleware
+import me.seroperson.zio.http.pac4j.ZioPac4jDefaults
 import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
-import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import me.seroperson.zio.http.pac4j.config.CallbackConfig
+import me.seroperson.zio.http.pac4j.config.LoginConfig
+import me.seroperson.zio.http.pac4j.config.LogoutConfig
 import me.seroperson.zio.http.pac4j.config.SecurityConfig
 import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
-import me.seroperson.zio.http.pac4j.config.CallbackConfig
-import me.seroperson.zio.http.pac4j.config.LogoutConfig
-import me.seroperson.zio.http.pac4j.ZioPac4jDefaults
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import me.seroperson.zio.http.pac4j.session.SessionRepository
+import me.seroperson.zio.http.pac4j.session.ZioSessionStore
 import org.pac4j.core.context.session.SessionStore
-import zio.http.Header.SetCookie
-import me.seroperson.zio.http.pac4j.Pac4jMiddleware
 import org.pac4j.core.profile.UserProfile
-import zio.http.Request
+import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.http.client.indirect.FormClient
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import zio._
+import zio.http._
 import zio.http.Header.HeaderType
 import zio.http.Header.Location
+import zio.http.Header.SetCookie
 import zio.http.MediaTypes
-import me.seroperson.zio.http.pac4j.config.LoginConfig
-import zio.logging.slf4j.bridge.Slf4jBridge
+import zio.http.Request
 import zio.logging.ConsoleLoggerConfig
 import zio.logging.LogFilter
+import zio.logging.consoleLogger
+import zio.logging.slf4j.bridge.Slf4jBridge
+import zio.test._
+import zio.test.Assertion._
 
 object SessionSpec extends ZIOSpecDefault {
 

@@ -1,7 +1,7 @@
 package me.seroperson.zio.http.pac4j.session
 
-import zio.Task
 import java.util.UUID
+import zio.Task
 
 trait SessionRepository {
 

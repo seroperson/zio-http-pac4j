@@ -1,26 +1,24 @@
 package me.seroperson.zio.http.pac4j
 
-import zio.test._
-import zio.test.Assertion._
-import zio.http._
-import zio._
-
-import org.pac4j.core.util.Pac4jConstants
-
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-import me.seroperson.zio.http.pac4j.session.SessionRepository
-import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import me.seroperson.zio.http.pac4j.ZioPac4jDefaults
 import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
-import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import me.seroperson.zio.http.pac4j.config.CallbackConfig
+import me.seroperson.zio.http.pac4j.config.LoginConfig
+import me.seroperson.zio.http.pac4j.config.LogoutConfig
 import me.seroperson.zio.http.pac4j.config.SecurityConfig
 import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
-import me.seroperson.zio.http.pac4j.config.CallbackConfig
-import me.seroperson.zio.http.pac4j.config.LogoutConfig
-import me.seroperson.zio.http.pac4j.ZioPac4jDefaults
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import me.seroperson.zio.http.pac4j.session.SessionRepository
+import me.seroperson.zio.http.pac4j.session.ZioSessionStore
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.util.Pac4jConstants
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import zio._
+import zio.http._
 import zio.http.Header.SetCookie
-import me.seroperson.zio.http.pac4j.config.LoginConfig
+import zio.test._
+import zio.test.Assertion._
 
 object GenericSessionStoreSpec extends ZIOSpecDefault {
 

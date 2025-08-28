@@ -1,12 +1,12 @@
 package me.seroperson.zio.http.pac4j
 
-import zio.http.Response
-import zio.ZIO
-import zio.http.Header
-import zio.NonEmptyChunk
-import zio.http.Cookie
 import org.pac4j.core.util.Pac4jConstants
+import zio.NonEmptyChunk
+import zio.ZIO
+import zio.http.Cookie
+import zio.http.Header
 import zio.http.Headers
+import zio.http.Response
 
 object TestUtils {
 

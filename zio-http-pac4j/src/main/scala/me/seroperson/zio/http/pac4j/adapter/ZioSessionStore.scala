@@ -1,22 +1,24 @@
 package me.seroperson.zio.http.pac4j.session
 
-import zio._
-import zio.http._
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
-import java.util.{Map => JMap, Collection => JCollection, Optional}
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-import scala.collection.StringOps._
-import org.pac4j.core.context.session.SessionStoreFactory
-import org.pac4j.core.context.FrameworkParameters
-import org.pac4j.core.util.Pac4jConstants
-import org.pac4j.core.context.{Cookie, WebContext}
-import zio.http.Cookie.SameSite
+import java.util.{Collection => JCollection}
+import java.util.{Map => JMap}
+import java.util.Optional
 import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
 import me.seroperson.zio.http.pac4j.config.SecurityConfig
+import org.pac4j.core.context.Cookie
+import org.pac4j.core.context.FrameworkParameters
+import org.pac4j.core.context.WebContext
+import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
+import org.pac4j.core.util.Pac4jConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import scala.collection.StringOps._
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import zio._
+import zio.http._
+import zio.http.Cookie.SameSite
 
 class ZioSessionStore(
     sessionRepository: SessionRepository,

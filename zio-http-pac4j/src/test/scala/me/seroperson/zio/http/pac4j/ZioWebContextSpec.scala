@@ -1,27 +1,27 @@
 package me.seroperson.zio.http.pac4j
 
-import zio.test._
-import zio.test.Assertion._
-import org.pac4j.core.context.Cookie
-import zio.ZLayer
-import zio.test.ZIOSpecDefault
+import me.seroperson.zio.http.pac4j.ZioPac4jDefaults
+import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
+import me.seroperson.zio.http.pac4j.config.CallbackConfig
+import me.seroperson.zio.http.pac4j.config.LoginConfig
+import me.seroperson.zio.http.pac4j.config.LogoutConfig
 import me.seroperson.zio.http.pac4j.config.SecurityConfig
 import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
-import me.seroperson.zio.http.pac4j.config.CallbackConfig
-import me.seroperson.zio.http.pac4j.config.LogoutConfig
 import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
-import me.seroperson.zio.http.pac4j.ZioPac4jDefaults
 import me.seroperson.zio.http.pac4j.session.SessionRepository
+import org.pac4j.core.context.Cookie
 import org.pac4j.core.context.session.SessionStore
-import zio._
-import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
-import zio.http.Request
 import org.pac4j.core.util.Pac4jConstants
-import zio.http.Header.SetCookie
-import zio.http.Header
+import zio._
+import zio.ZLayer
 import zio.http.Cookie.SameSite
+import zio.http.Header
+import zio.http.Header.SetCookie
 import zio.http.Path
-import me.seroperson.zio.http.pac4j.config.LoginConfig
+import zio.http.Request
+import zio.test._
+import zio.test.Assertion._
+import zio.test.ZIOSpecDefault
 
 object ZioWebContextSpec extends ZIOSpecDefault {
 

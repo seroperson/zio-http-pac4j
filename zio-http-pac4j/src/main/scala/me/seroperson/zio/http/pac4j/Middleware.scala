@@ -1,38 +1,37 @@
 package me.seroperson.zio.http.pac4j
 
-import zio._
-import zio.http._
-import org.pac4j.core.config.Config
-import org.pac4j.core.engine.{
-  DefaultSecurityLogic,
-  DefaultCallbackLogic,
-  DefaultLogoutLogic,
-  SecurityGrantedAccessAdapter
-}
-import org.pac4j.core.profile.UserProfile
-import org.pac4j.core.context.{FrameworkParameters, WebContext}
 import java.util.Collection
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-import org.pac4j.core.adapter.FrameworkAdapter
-import zio.http.Status.NotFound
-import org.pac4j.core.client.finder.DefaultCallbackClientFinder
-import org.pac4j.core.context.session.SessionStoreFactory
-import org.pac4j.core.context.session.SessionStore
-import me.seroperson.zio.http.pac4j.session.ZioSessionStore
-import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
-import org.pac4j.core.profile.ProfileManager
-import org.pac4j.core.profile.CommonProfile
-import org.pac4j.core.profile.factory.ProfileManagerFactory
-import me.seroperson.zio.http.pac4j.session.SessionRepository
-import me.seroperson.zio.http.pac4j.config.SecurityConfig
-import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
 import me.seroperson.zio.http.pac4j.adapter.ZioHttpActionAdapter
 import me.seroperson.zio.http.pac4j.adapter.ZioSecurityGrantedAccess
-import org.pac4j.core.http.adapter.HttpActionAdapter
-import org.pac4j.core.engine.SecurityLogic
+import me.seroperson.zio.http.pac4j.adapter.ZioWebContext
+import me.seroperson.zio.http.pac4j.config.SecurityConfig
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import me.seroperson.zio.http.pac4j.session.SessionRepository
+import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import org.pac4j.core.adapter.FrameworkAdapter
+import org.pac4j.core.client.finder.DefaultCallbackClientFinder
+import org.pac4j.core.config.Config
+import org.pac4j.core.context.FrameworkParameters
+import org.pac4j.core.context.WebContext
+import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.engine.CallbackLogic
+import org.pac4j.core.engine.DefaultCallbackLogic
+import org.pac4j.core.engine.DefaultLogoutLogic
+import org.pac4j.core.engine.DefaultSecurityLogic
 import org.pac4j.core.engine.LogoutLogic
+import org.pac4j.core.engine.SecurityGrantedAccessAdapter
+import org.pac4j.core.engine.SecurityLogic
+import org.pac4j.core.http.adapter.HttpActionAdapter
+import org.pac4j.core.profile.CommonProfile
+import org.pac4j.core.profile.ProfileManager
+import org.pac4j.core.profile.UserProfile
+import org.pac4j.core.profile.factory.ProfileManagerFactory
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import zio._
+import zio.http._
+import zio.http.Status.NotFound
 
 object Pac4jMiddleware {
 

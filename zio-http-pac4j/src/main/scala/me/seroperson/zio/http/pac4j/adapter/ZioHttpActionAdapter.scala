@@ -1,18 +1,18 @@
 package me.seroperson.zio.http.pac4j.adapter
 
-import org.pac4j.core.http.adapter.HttpActionAdapter
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.exception.http.HttpAction
-import org.pac4j.core.exception.http.FoundAction
-import org.pac4j.core.exception.http.SeeOtherAction
 import org.pac4j.core.context.HttpConstants
-import zio.http.Status
-import org.pac4j.core.exception.http.OkAction
-import zio.http.MediaType
-import zio.ZIO
-import zio.ZLayer
+import org.pac4j.core.context.WebContext
 import org.pac4j.core.credentials.UsernamePasswordCredentials
 import org.pac4j.core.credentials.extractor.FormExtractor
+import org.pac4j.core.exception.http.FoundAction
+import org.pac4j.core.exception.http.HttpAction
+import org.pac4j.core.exception.http.OkAction
+import org.pac4j.core.exception.http.SeeOtherAction
+import org.pac4j.core.http.adapter.HttpActionAdapter
+import zio.ZIO
+import zio.ZLayer
+import zio.http.MediaType
+import zio.http.Status
 
 class ZioHttpActionAdapter extends HttpActionAdapter {
   override def adapt(action: HttpAction, context: WebContext): AnyRef = {

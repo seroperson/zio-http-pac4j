@@ -1,27 +1,26 @@
+import me.seroperson.zio.http.pac4j._
+import me.seroperson.zio.http.pac4j.adapter.ZioHttpActionAdapter
+import me.seroperson.zio.http.pac4j.adapter.ZioLogic
+import me.seroperson.zio.http.pac4j.adapter.ZioSecurityGrantedAccess
+import me.seroperson.zio.http.pac4j.config.CallbackConfig
+import me.seroperson.zio.http.pac4j.config.LoginConfig
+import me.seroperson.zio.http.pac4j.config.LogoutConfig
+import me.seroperson.zio.http.pac4j.config.SecurityConfig
+import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
+import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import org.pac4j.core.engine.savedrequest.DefaultSavedRequestHandler
+import org.pac4j.core.profile.CommonProfile
+import org.pac4j.core.profile.UserProfile
+import org.pac4j.oauth.client.GitHubClient
+import org.pac4j.oauth.client.Google2Client
 import zio._
 import zio.http._
 import zio.http.template._
-import zio.logging.consoleLogger
-import me.seroperson.zio.http.pac4j._
-import org.pac4j.oauth.client.Google2Client
-import zio.logging.slf4j.bridge.Slf4jBridge
-import zio.logging.LogFilter
-import org.pac4j.oauth.client.GitHubClient
-import org.pac4j.core.profile.CommonProfile
-import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
-import me.seroperson.zio.http.pac4j.adapter.ZioHttpActionAdapter
-import me.seroperson.zio.http.pac4j.adapter.ZioLogic
-import me.seroperson.zio.http.pac4j.session.ZioSessionStore
-import me.seroperson.zio.http.pac4j.config.SecurityConfig
-import me.seroperson.zio.http.pac4j.adapter.ZioSecurityGrantedAccess
-import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
-import me.seroperson.zio.http.pac4j.config.CallbackConfig
-import me.seroperson.zio.http.pac4j.config.LogoutConfig
-import org.pac4j.core.engine.savedrequest.DefaultSavedRequestHandler
-import org.pac4j.core.profile.UserProfile
-import zio.logging.consoleLogger
 import zio.logging.ConsoleLoggerConfig
-import me.seroperson.zio.http.pac4j.config.LoginConfig
+import zio.logging.LogFilter
+import zio.logging.consoleLogger
+import zio.logging.slf4j.bridge.Slf4jBridge
 
 object ZioApi extends ZIOAppDefault {
 

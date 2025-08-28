@@ -1,11 +1,11 @@
 package me.seroperson.zio.http.pac4j
 
-import zio.ZLayer
-import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
-import me.seroperson.zio.http.pac4j.adapter.ZioSecurityGrantedAccess
 import me.seroperson.zio.http.pac4j.adapter.ZioHttpActionAdapter
 import me.seroperson.zio.http.pac4j.adapter.ZioLogic
+import me.seroperson.zio.http.pac4j.adapter.ZioSecurityGrantedAccess
+import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
 import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import zio.ZLayer
 
 object ZioPac4jDefaults {
 

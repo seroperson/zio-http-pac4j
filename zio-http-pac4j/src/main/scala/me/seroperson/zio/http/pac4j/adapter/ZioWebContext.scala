@@ -1,25 +1,27 @@
 package me.seroperson.zio.http.pac4j.adapter
 
-import zio._
+import java.nio.charset.StandardCharsets
+import java.util.{Collection => JCollection}
+import java.util.{Map => JMap}
+import java.util.Optional
+import org.pac4j.core.context.Cookie
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.{SessionStore => Pac4jSessionStore}
-import java.util.{Map => JMap, Collection => JCollection, Optional}
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-import scala.collection.StringOps._
-import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.core.profile.CommonProfile
-import java.nio.charset.StandardCharsets
-import zio.http.Status
-import zio.http.Request
-import zio.http.Response
-import org.pac4j.core.context.Cookie
-import zio.http.Path
-import zio.http.Cookie.SameSite
-import zio.http.MediaType
-import zio.http.Body
+import org.pac4j.core.util.Pac4jConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import scala.collection.StringOps._
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import zio._
+import zio.http.Body
+import zio.http.Cookie.SameSite
+import zio.http.MediaType
+import zio.http.Path
+import zio.http.Request
+import zio.http.Response
+import zio.http.Status
 
 class ZioWebContext(
     private val request: Request

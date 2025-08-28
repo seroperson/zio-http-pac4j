@@ -1,8 +1,8 @@
 package me.seroperson.zio.http.pac4j.session
 
-import zio.Task
 import java.util.UUID
 import scala.annotation.tailrec
+import zio.Task
 import zio.ZIO
 import zio.ZLayer
 
