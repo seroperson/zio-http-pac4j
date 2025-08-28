@@ -107,6 +107,16 @@ lazy val `zio-form-oauth` =
       libraryDependencies ++= coreDependencies ++ exampleDependencies
     )
 
+lazy val `zio-jwt` =
+  (project in file("example/zio-jwt"))
+    .dependsOn(`zio-http-pac4j`)
+    .enablePlugins(JavaAppPackaging)
+    .settings(commonSettings)
+    .settings(runnableSettings)
+    .settings(
+      libraryDependencies ++= coreDependencies ++ exampleDependencies
+    )
+
 lazy val `zio-sveltekit-backend` =
   (project in file("example/zio-sveltekit/backend"))
     .dependsOn(`zio-http-pac4j`)
@@ -122,6 +132,7 @@ lazy val root = (project in file("."))
   .aggregate(
     `zio-http-pac4j`,
     `zio-form-oauth`,
+    `zio-jwt`,
     `zio-sveltekit-backend`
   )
   .settings(

@@ -28,7 +28,7 @@ object GenericSessionStoreSpec extends ZIOSpecDefault {
     SecurityConfig(clients = List())
   } >+> InMemorySessionRepository.live >+> ZioPac4jDefaults.live
 
-  def spec = suite("GenericSessionStoreSpec")(
+  override def spec = suite("GenericSessionStoreSpec")(
     test("getSessionId retrieves SessionId from requestAttribute") {
       val expectedSessionId = "sessionId"
       (for {
@@ -55,10 +55,9 @@ object GenericSessionStoreSpec extends ZIOSpecDefault {
         sessionStore <- ZIO.service[SessionStore]
         webContext = {
           val context = new ZioWebContext(
-            Request()
-              .addCookie(
-                Cookie.Request(Pac4jConstants.SESSION_ID, expectedSessionId)
-              )
+            Request().addCookie(
+              Cookie.Request(Pac4jConstants.SESSION_ID, expectedSessionId)
+            )
           )
           context
         }
@@ -97,33 +96,19 @@ object GenericSessionStoreSpec extends ZIOSpecDefault {
             )
             context
           }
-          sessionId = sessionStore
+          sessionIdFromStore = sessionStore
             .getSessionId(webContext, true)
             .toScala
           sessionIdKey = Pac4jConstants.SESSION_ID
-        } yield (assert(sessionId.isDefined)(equalTo(true)) &&
-          assert(webContext.getRequestAttribute(sessionIdKey).toScala)(
-            equalTo(sessionId)
-          ) &&
-          assert(
-            webContext.getResponse.headers
-              .get(Header.SetCookie)
-              .collect {
-                case SetCookie(
-                      Cookie.Response(
-                        Pac4jConstants.SESSION_ID,
-                        content,
-                        _,
-                        _,
-                        _,
-                        _,
-                        _,
-                        _
-                      )
-                    ) =>
-                  content
-              }
-          )(equalTo(sessionId)))
+          sessionIdFromAttribute = webContext
+            .getRequestAttribute(sessionIdKey)
+            .toScala
+          sessionIdFromCookie = TestUtils.retrieveSessionId(
+            webContext.getResponse
+          )
+        } yield (assert(sessionIdFromStore.isDefined)(equalTo(true)) &&
+          assert(sessionIdFromAttribute)(equalTo(sessionIdFromStore)) &&
+          assert(sessionIdFromCookie)(equalTo(sessionIdFromStore)))
       )
         .provide(defaultLayers)
     },
@@ -221,16 +206,13 @@ object GenericSessionStoreSpec extends ZIOSpecDefault {
           .getRequestCookies()
           .asScala
           .find(_.getName() == Pac4jConstants.SESSION_ID)
-        sessionIdResponseCookie <- TestUtils.retrieveSessionId(
+        sessionIdResponseCookie <- TestUtils.retrieveSessionIdZIO(
           webContext.getResponse
         )
-      } yield
-        // format: off
-        assert(session)(equalTo(None)) &&
+      } yield assert(session)(equalTo(None)) &&
         assert(sessionIdAttribute)(equalTo(None)) &&
         assert(sessionIdResponseCookie)(equalTo("")) &&
         assert(sessionIdRequestCookie)(equalTo(None)))
-        // format: on
         .provide(defaultLayers)
     },
     test("renewSession moves data from old session to new one") {
@@ -253,12 +235,9 @@ object GenericSessionStoreSpec extends ZIOSpecDefault {
           .asInstanceOf[String]
         newSession <- sessionRepository.get(newSessionId)
         newValue = newSession.flatMap(s => s.get("key"))
-      } yield
-        // format: off
-        assert(oldSession)(equalTo(None)) &&
+      } yield assert(oldSession)(equalTo(None)) &&
         assert(newSessionId)(not(equalTo(oldSessionId))) &&
         assert(newValue)(equalTo(Some("value"))))
-        // format: on
         .provide(defaultLayers)
     }
   )

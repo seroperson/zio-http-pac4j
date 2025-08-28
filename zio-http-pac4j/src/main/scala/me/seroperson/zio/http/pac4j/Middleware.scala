@@ -45,15 +45,13 @@ object Pac4jMiddleware {
           pac4jConfig <- buildPac4jConfig(req)
           webContext <- buildPac4jWebContext(pac4jConfig)
           sessionStore <- buildPac4jSessionStore(pac4jConfig)
-          result <- ZIO
-            .attempt {
-              pac4jConfig
-                .getProfileManagerFactory()
-                .apply(webContext, sessionStore)
-                .getProfile
-                .toScala
-            }
-        } yield result.isDefined).mapError { _ =>
+          profileManager <- buildPac4jProfileManager(
+            pac4jConfig,
+            webContext,
+            sessionStore
+          )
+          profile = profileManager.getProfile.toScala
+        } yield profile.isDefined).mapError { _ =>
           Response.internalServerError
         }.logError
     )
@@ -65,15 +63,13 @@ object Pac4jMiddleware {
           pac4jConfig <- buildPac4jConfig(req)
           webContext <- buildPac4jWebContext(pac4jConfig)
           sessionStore <- buildPac4jSessionStore(pac4jConfig)
-          result <- ZIO
-            .attempt {
-              pac4jConfig
-                .getProfileManagerFactory()
-                .apply(webContext, sessionStore)
-                .getProfile
-                .toScala
-            }
-        } yield result).mapError { _ =>
+          profileManager <- buildPac4jProfileManager(
+            pac4jConfig,
+            webContext,
+            sessionStore
+          )
+          profile = profileManager.getProfile.toScala
+        } yield profile).mapError { _ =>
           Response.internalServerError
         }.logError
     )
@@ -83,8 +79,8 @@ object Pac4jMiddleware {
       authorizers: List[String] = List.empty,
       matchers: List[String] = List.empty
   ) =
-    HandlerAspect.updateRequestZIO(
-      update = (req: Request) =>
+    HandlerAspect.customAuthProvidingZIO(
+      provide = (req: Request) =>
         (for {
           pac4jConfig <- buildPac4jConfig(req)
           securityGrantedAccess <- ZIO.service[SecurityGrantedAccessAdapter]
@@ -99,7 +95,16 @@ object Pac4jMiddleware {
               null: FrameworkParameters
             ) match {
             case Some(context: ZioWebContext) =>
-              ZIO.succeed(req)
+              (for {
+                sessionStore <- buildPac4jSessionStore(pac4jConfig)
+                profileManager <- buildPac4jProfileManager(
+                  pac4jConfig,
+                  context,
+                  sessionStore
+                )
+              } yield profileManager.getProfile.toScala).mapError { _ =>
+                Response.internalServerError
+              }
 
             case y: Response =>
               ZIO.fail(y)
@@ -149,30 +154,38 @@ object Pac4jMiddleware {
       }
     )
 
-  def callback[A](route: RoutePattern[A] = Method.GET / "api" / "callback") =
-    Routes(
-      route -> handler { (req: Request) =>
-        (for {
-          config <- ZIO.service[SecurityConfig]
-          pac4jConfig <- buildPac4jConfig(req)
-          response <- ZIO
-            .attempt(
-              pac4jConfig
-                .getCallbackLogic()
-                .perform(
-                  pac4jConfig,
-                  config.callback.defaultUrl.encode,
-                  config.callback.renewSession,
-                  config.callback.defaultClient,
-                  null: FrameworkParameters
-                )
-                .asInstanceOf[Response]
-            )
-        } yield response).mapError { _ =>
-          Response.internalServerError
-        }.logError
-      }
-    )
+  def callback[A](
+      routes: Chunk[RoutePattern[A]] = Chunk(
+        Method.GET / "api" / "callback",
+        Method.POST / "api" / "callback"
+      )
+  ) = {
+    val callbackHandler = handler { (req: Request) =>
+      (for {
+        config <- ZIO.service[SecurityConfig]
+        pac4jConfig <- buildPac4jConfig(req)
+        response <- ZIO
+          .attempt(
+            pac4jConfig
+              .getCallbackLogic()
+              .perform(
+                pac4jConfig,
+                config.callback.defaultUrl.encode,
+                config.callback.renewSession,
+                config.callback.defaultClient,
+                null: FrameworkParameters
+              )
+              .asInstanceOf[Response]
+          )
+      } yield response).mapError { _ =>
+        Response.internalServerError
+      }.logError
+    }
+
+    Routes(routes.map { route =>
+      route -> callbackHandler
+    })
+  }
 
   def logout[A](route: RoutePattern[A] = Method.GET / "api" / "logout") =
     Routes(
@@ -223,6 +236,10 @@ object Pac4jMiddleware {
           pac4jConfig.addClient(client)
         }
 
+        securityConfig.authorizers.foreach { case (name, authorizer) =>
+          pac4jConfig.addAuthorizer(name, authorizer)
+        }
+
         pac4jConfig
       }
     } yield pac4jConfig
@@ -238,5 +255,16 @@ object Pac4jMiddleware {
       .getSessionStoreFactory()
       .newSessionStore(null: FrameworkParameters)
   )
+
+  def buildPac4jProfileManager(
+      pac4jConfig: Config,
+      webContext: WebContext,
+      sessionStore: SessionStore
+  ) = ZIO
+    .attempt {
+      pac4jConfig
+        .getProfileManagerFactory()
+        .apply(webContext, sessionStore)
+    }
 
 }

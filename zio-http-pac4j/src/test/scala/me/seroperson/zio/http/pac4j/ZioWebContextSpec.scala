@@ -29,7 +29,7 @@ object ZioWebContextSpec extends ZIOSpecDefault {
     SecurityConfig(clients = List())
   } >+> InMemorySessionRepository.live >+> ZioPac4jDefaults.live
 
-  def spec = suite("ZioWebContext")(
+  override def spec = suite("ZioWebContextSpec")(
     test("forward the cookie attributes") {
       val request = Request.get("/id")
       val webContext = new ZioWebContext(Request())

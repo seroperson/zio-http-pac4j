@@ -3,9 +3,11 @@ package me.seroperson.zio.http.pac4j.config
 import org.pac4j.core.client.Client
 import zio.http.Cookie.SameSite
 import zio.http.URL
+import org.pac4j.core.authorization.authorizer.Authorizer
 
 case class SecurityConfig(
-    clients: List[Client],
+    clients: List[Client] = List.empty,
+    authorizers: List[(String, Authorizer)] = List.empty,
     sessionCookie: SessionCookieConfig = SessionCookieConfig(),
     callback: CallbackConfig = CallbackConfig(),
     login: LoginConfig = LoginConfig(),

@@ -6,6 +6,7 @@ import zio.http._
 import zio._
 
 import org.pac4j.core.util.Pac4jConstants
+import zio.logging.consoleLogger
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -29,6 +30,9 @@ import zio.http.Header.HeaderType
 import zio.http.Header.Location
 import zio.http.MediaTypes
 import me.seroperson.zio.http.pac4j.config.LoginConfig
+import zio.logging.slf4j.bridge.Slf4jBridge
+import zio.logging.ConsoleLoggerConfig
+import zio.logging.LogFilter
 
 object SessionSpec extends ZIOSpecDefault {
 
@@ -43,10 +47,10 @@ object SessionSpec extends ZIOSpecDefault {
     )
   } >+> InMemorySessionRepository.live >+> ZioPac4jDefaults.live >+> Scope.default
 
-  def spec = suiteAll("Pac4j session management") {
+  override def spec = suiteAll("SessionSpec") {
 
-    val allRoutes = (Pac4jMiddleware.callback ++
-      Pac4jMiddleware.logout ++
+    val allRoutes = (Pac4jMiddleware.callback() ++
+      Pac4jMiddleware.logout() ++
       Pac4jMiddleware.login(clients = List("FormClient")) ++
       Routes(
         Method.GET / Root -> (handler {
@@ -54,10 +58,11 @@ object SessionSpec extends ZIOSpecDefault {
         } @@ Pac4jMiddleware.errorIfUnauthorized)
       ))
 
-    def loginRequest(client: String, sessionCookies: Iterable[Header.Cookie]) =
+    def loginRequest(client: String, sessionCookies: Headers) =
       allRoutes(
         Request(
           method = Method.GET,
+          headers = sessionCookies,
           url = (url"/api/login": URL)
             .addQueryParam("provider", client)
         )
@@ -123,7 +128,7 @@ object SessionSpec extends ZIOSpecDefault {
         "return 401 on protected route after retrieving session_id without logging in"
       ) {
         (for {
-          login <- loginRequest("FormClient", Iterable.empty)
+          login <- loginRequest("FormClient", Headers.empty)
           request = Request(
             method = Method.GET,
             headers = Headers(TestUtils.collectSessionCookies(login)),
@@ -135,15 +140,15 @@ object SessionSpec extends ZIOSpecDefault {
       },
       test("return 200 on protected route after logging in") {
         (for {
-          unauthorizedLogin <- loginRequest("FormClient", Iterable.empty)
+          unauthorizedLogin <- loginRequest("FormClient", Headers.empty)
 
           sessionCookies = TestUtils.collectSessionCookies(unauthorizedLogin)
 
-          callbackResponse <- allRoutes(
+          callback <- allRoutes(
             Request(
               method = Method.POST,
-              headers = Headers(
-                sessionCookies ++ Seq(
+              headers = sessionCookies ++ Headers(
+                Seq(
                   Header.ContentType(
                     MediaType.application.`x-www-form-urlencoded`
                   )
@@ -162,13 +167,12 @@ object SessionSpec extends ZIOSpecDefault {
               )
             )
           )
-
           authorizedLogin <- loginRequest("FormClient", sessionCookies)
 
           protectedResponse <- allRoutes(
             Request(
               method = Method.GET,
-              headers = Headers(sessionCookies),
+              headers = sessionCookies,
               url = URL.root
             )
           )
