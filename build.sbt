@@ -2,9 +2,6 @@ ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / organization := "me.seroperson"
 ThisBuild / version := "0.1.0"
 
-// Scala versions for cross-compilation
-ThisBuild / crossScalaVersions := Seq("2.13.16", "3.3.6")
-
 // Dependency versions
 val zioVersion = "2.1.20"
 val zioHttpVersion = "3.4.0"
@@ -64,6 +61,9 @@ lazy val exampleDependencies = Seq(
 // Main library module
 lazy val `zio-http-pac4j` = (project in file("zio-http-pac4j"))
   .settings(commonSettings)
+  .settings(
+    crossScalaVersions := Seq("2.13.16", "3.3.6")
+  )
   .settings(
     name := "zio-http-pac4j",
     libraryDependencies ++= coreDependencies ++ testDependencies,
