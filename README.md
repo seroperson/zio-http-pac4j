@@ -12,13 +12,14 @@
 
 This library provides [pac4j][1] integration for [zio-http][2]. It allows you to
 easily implement authorization, authentication mechanisms to secure your web
-service.
+service. Resulting API appears to be a little "javish", but still it's better
+than nothing.
 
-This repository is written using [jj][9] (jujutsu) VCS.
+This repository is managed using [jj][9] (jujutsu) VCS.
 
 ## Installation
 
-In case if you use `sbt`:
+In case you use `sbt`:
 
 ```sbt
 libraryDependencies += "me.seroperson" %% "zio-http-pac4j" % "0.1.0"
@@ -35,7 +36,7 @@ least JDK 17.
 
 ## How to use
 
-The way how you use it depends on your needs. Firstly, be sure to get known with
+How you use it depends on your needs. Firstly, be sure to get familiar with
 [pac4j documentation][3] and their [concepts and components][4].
 
 Let's examine how to implement authentication using Google, GitHub and simple
@@ -86,7 +87,7 @@ SecurityConfig(
 
 You can notice `/api/callback` paths here, we will discuss them later.
 `SimpleTestUsernamePasswordAuthenticator` instance here is an `Authenticator`,
-which allows in all users with `username == password` and must be used only for
+which allows all users in with `username == password` and must be used only for
 testing purposes. For login + password method we also need to implement the form
 itself:
 
@@ -185,10 +186,10 @@ val allRoutes = (
 )
 ```
 
-All these routes are highly-customizable via arguments and config object, so you
-can dive deeper into source code or documentation to get know them better. For
-example, using the `route` argument you can replace the default path of `logout`
-or `callback` routes.
+All these routes are highly customizable via arguments and config object, so you
+can dive deeper into source code or documentation to get to know them better.
+For example, using the `route` argument you can replace the default path of
+`logout` or `callback` routes.
 
 Finally, let's provide necessary layers and bundle everything together:
 

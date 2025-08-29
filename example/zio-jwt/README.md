@@ -6,14 +6,14 @@ APIs.
 
 ## Running
 
-To start it, run `sbt zio-jwt/run` from repository root. It will boot a
+To start it, run `sbt zio-jwt/run` from the repository root. It will boot a
 webserver at `localhost:9000`, which exposes the following endpoints:
 
 - `/protected-query` - requires JWT token to be passed via `token` query
   parameter. Returns 401 if unauthenticated, 200 otherwise.
 - `/protected-header` - requires JWT token to be passed via `Authorization`
   header. Returns 401 if unauthenticated, 200 otherwise.
-- `/jwt` - protected with Basic Auth route, which allows in all users with
+- `/jwt` - protected with Basic Auth route, which allows all users in with
   `username == password`. Returns 200 with JWT token if authentication passes,
   401 otherwise.
 

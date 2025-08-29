@@ -109,7 +109,8 @@ object ZioApi extends ZIOAppDefault {
         },
         ZLayer.succeed[SignatureConfiguration] {
           new SecretSignatureConfiguration(
-            "I want one token please, I am a normal user and I am a good guy"
+            // https://www.grc.com/passwords.htm
+            "VOAAvi(F2Wi9LiybnxNOJGSryxX58@;v@5Ciz5Cv~WQ|8_yh]ZAIhqDAYhZ3}r{"
           )
         },
         ZLayer.fromZIO {

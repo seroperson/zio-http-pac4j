@@ -5,9 +5,9 @@ GitHub and a simple login + password pair using a HTML form.
 
 ## Running
 
-To start it, run `sbt zio-form-oauth/run` from repository root. It will boot a
-webserver at `localhost:9000`, so you can immediately open it in browser and try
-everything you want.
+To start it, run `sbt zio-form-oauth/run` from the repository root. It will boot
+a webserver at `localhost:9000`, so you can immediately open it in the browser
+and try everything you want.
 
 Environment variables `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
 `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` are mandatory to run, but they're
