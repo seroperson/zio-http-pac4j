@@ -11,6 +11,7 @@ import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
 import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
 import me.seroperson.zio.http.pac4j.session.SessionRepository
 import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import org.pac4j.core.authorization.authorizer.IsFullyAuthenticatedAuthorizer
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.Pac4jConstants

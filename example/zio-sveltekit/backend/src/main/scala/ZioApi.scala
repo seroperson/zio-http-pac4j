@@ -9,6 +9,7 @@ import me.seroperson.zio.http.pac4j.config.SecurityConfig
 import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
 import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
 import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import org.pac4j.core.authorization.authorizer.IsFullyAuthenticatedAuthorizer
 import org.pac4j.core.engine.savedrequest.DefaultSavedRequestHandler
 import org.pac4j.core.profile.CommonProfile
 import org.pac4j.core.profile.UserProfile
@@ -23,6 +24,8 @@ import zio.logging.consoleLogger
 import zio.logging.slf4j.bridge.Slf4jBridge
 
 object ZioApi extends ZIOAppDefault {
+
+  val baseUrl = sys.env.getOrElse("BASE_URL", "http://localhost:8080")
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers >+>
@@ -50,7 +53,10 @@ object ZioApi extends ZIOAppDefault {
           )
         )
       } yield response
-    } @@ Pac4jMiddleware.errorIfUnauthorizedWithProfile
+    } @@ Pac4jMiddleware.securityFilter(
+      clients = List(),
+      authorizers = List("IsFullyAuthenticatedAuthorizer")
+    )
   )
 
   val allRoutes =
@@ -60,10 +66,7 @@ object ZioApi extends ZIOAppDefault {
       userRoutes)
 
   override val run = for {
-    _ <- ZIO.logInfo("Starting on http://localhost:9000")
-    baseUrl <- ZIO.succeed(
-      sys.env.getOrElse("BASE_URL", "http://localhost:9000")
-    )
+    _ <- ZIO.logInfo(s"Starting on $baseUrl")
     _ <- Server
       .serve(allRoutes)
       .provide(
@@ -84,6 +87,9 @@ object ZioApi extends ZIOAppDefault {
                   sys.env.get("GITHUB_CLIENT_SECRET").getOrElse("")
                 ).setCallbackUrl(s"$baseUrl/api/callback")
               }
+            ),
+            authorizers = List(
+              "IsFullyAuthenticatedAuthorizer" -> new IsFullyAuthenticatedAuthorizer()
             )
           )
         }

@@ -111,6 +111,35 @@ object Pac4jMiddleware {
         } yield result).logError
     )
 
+  def securityFilterUnit(
+      clients: List[String] = List.empty,
+      authorizers: List[String] = List.empty,
+      matchers: List[String] = List.empty
+  ) =
+    HandlerAspect.customAuthZIO(
+      verify = (req: Request) =>
+        (for {
+          pac4jConfig <- buildPac4jConfig(req)
+          securityGrantedAccess <- ZIO.service[SecurityGrantedAccessAdapter]
+          result <- pac4jConfig
+            .getSecurityLogic()
+            .perform(
+              pac4jConfig,
+              securityGrantedAccess,
+              nullIfEmpty(clients.mkString(",")),
+              nullIfEmpty(authorizers.mkString(",")),
+              nullIfEmpty(matchers.mkString(",")),
+              null: FrameworkParameters
+            ) match {
+            case Some(context: ZioWebContext) =>
+              ZIO.succeed(true)
+
+            case y: Response =>
+              ZIO.fail(y)
+          }
+        } yield result).logError
+    )
+
   def login[A](
       clients: List[String] = List.empty,
       authorizers: List[String] = List.empty,

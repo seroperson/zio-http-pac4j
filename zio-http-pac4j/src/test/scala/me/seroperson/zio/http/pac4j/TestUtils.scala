@@ -24,9 +24,12 @@ object TestUtils {
     ZIO.fromOption(retrieveSessionId(response))
 
   def retrieveSessionId(response: Response) =
+    retrieveSessionIdCookie(response).map(_.content)
+
+  def retrieveSessionIdCookie(response: Response) =
     response.headers.collect {
       case Header.SetCookie(
-            Cookie.Response(
+            x @ Cookie.Response(
               Pac4jConstants.SESSION_ID,
               content,
               _,
@@ -37,7 +40,7 @@ object TestUtils {
               _
             )
           ) =>
-        content
+        x
     }.headOption
 
 }

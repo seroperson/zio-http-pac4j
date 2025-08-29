@@ -9,6 +9,7 @@ import me.seroperson.zio.http.pac4j.config.SecurityConfig
 import me.seroperson.zio.http.pac4j.config.SessionCookieConfig
 import me.seroperson.zio.http.pac4j.session.InMemorySessionRepository
 import me.seroperson.zio.http.pac4j.session.ZioSessionStore
+import org.pac4j.core.authorization.authorizer.IsFullyAuthenticatedAuthorizer
 import org.pac4j.core.credentials.authenticator.Authenticator
 import org.pac4j.core.profile.CommonProfile
 import org.pac4j.core.profile.UserProfile
@@ -132,7 +133,10 @@ object ZioApi extends ZIOAppDefault {
           )
         )
       } yield response
-    } @@ Pac4jMiddleware.errorIfUnauthorizedWithProfile
+    } @@ Pac4jMiddleware.securityFilter(
+      clients = List(),
+      authorizers = List("IsFullyAuthenticatedAuthorizer")
+    )
   )
 
   val allRoutes =
@@ -169,6 +173,9 @@ object ZioApi extends ZIOAppDefault {
                   new SimpleTestUsernamePasswordAuthenticator()
                 ).setCallbackUrl(s"$baseUrl/api/callback")
               }
+            ),
+            authorizers = List(
+              "IsFullyAuthenticatedAuthorizer" -> new IsFullyAuthenticatedAuthorizer()
             )
           )
         }

@@ -11,8 +11,6 @@ import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.util.Pac4jConstants
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import scala.collection.StringOps._
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -25,7 +23,6 @@ class ZioSessionStore(
     config: SecurityConfig
 ) extends SessionStore {
 
-  private val logger: Logger = LoggerFactory.getLogger(getClass())
   private val runtime = Runtime.default
 
   private def unsafeRun[T](task: Task[T]): T = {
@@ -40,21 +37,18 @@ class ZioSessionStore(
       context: WebContext,
       createSession: Boolean
   ): Optional[String] = {
-    val id =
-      context.getRequestAttribute(Pac4jConstants.SESSION_ID).toScala match {
-        case Some(sessionId) => Some(sessionId.toString)
-        case None =>
-          context.getRequestCookies.asScala.find(
-            _.getName == Pac4jConstants.SESSION_ID
-          ) match {
-            case Some(cookie) => Option(cookie.getValue)
-            case None if createSession =>
-              Some(createSessionId(context.asInstanceOf[ZioWebContext]))
-            case None => None
-          }
-      }
-    logger.debug(s"getOrCreateSessionId - $id")
-    id.toJava
+    (context.getRequestAttribute(Pac4jConstants.SESSION_ID).toScala match {
+      case Some(sessionId) => Some(sessionId.toString)
+      case None =>
+        context.getRequestCookies.asScala.find(
+          _.getName == Pac4jConstants.SESSION_ID
+        ) match {
+          case Some(cookie) => Option(cookie.getValue)
+          case None if createSession =>
+            Some(createSessionId(context.asInstanceOf[ZioWebContext]))
+          case None => None
+        }
+    }).toJava
   }
 
   private def createSessionId(context: ZioWebContext): String = {
@@ -69,7 +63,7 @@ class ZioSessionStore(
     cookie.setHttpOnly(config.sessionCookie.httpOnly)
     config.sessionCookie.sameSite.foreach(s =>
       cookie.setSameSitePolicy(s.toString())
-    ) // todo ?
+    )
 
     context.addResponseCookie(cookie)
     id
@@ -82,7 +76,6 @@ class ZioSessionStore(
           .getOrElse(Map.empty)
           .get(key)
           .toJava
-        logger.debug(s"get key from store: $key, $value")
         value
       }
   }
@@ -90,13 +83,10 @@ class ZioSessionStore(
   override def set(context: WebContext, key: String, value: AnyRef): Unit = {
     val sessionId = getSessionId(context, createSession = true).get()
     if (value == null) {
-      logger.debug(s"unsetting $key")
       unsafeRun(sessionRepository.remove(sessionId, key))
     } else {
-      logger.debug(s"setting $key to $value")
       unsafeRun(sessionRepository.set(sessionId, key, value))
     }
-
   }
 
   override def destroySession(context: WebContext): Boolean = {
@@ -113,7 +103,6 @@ class ZioSessionStore(
   }
 
   override def getTrackableSession(context: WebContext): Optional[AnyRef] = {
-    logger.debug(s"getTrackableSession")
     getSessionId(context, false).asInstanceOf[Optional[AnyRef]]
   }
 
@@ -129,21 +118,18 @@ class ZioSessionStore(
   }
 
   override def renewSession(context: WebContext): Boolean = {
-    val oldSessionId = getSessionId(context, false)
+    val oldSessionId = getSessionId(context, false).toScala
     val oldData =
-      oldSessionId.flatMap(sid => unsafeRun(sessionRepository.get(sid)).toJava)
+      oldSessionId.flatMap(sid => unsafeRun(sessionRepository.get(sid)))
 
     destroySession(context)
 
-    val newSessionId = createSessionId(
-      context.asInstanceOf[ZioWebContext]
-    )
-    if (oldData.isPresent) {
+    val newSessionId = createSessionId(context.asInstanceOf[ZioWebContext])
+    oldData.foreach { data =>
       unsafeRun(
-        sessionRepository.update(newSessionId, oldData.get)
+        sessionRepository.update(newSessionId, data)
       )
     }
-    logger.debug(s"Renewed session: $oldSessionId -> $newSessionId")
     true
   }
 
