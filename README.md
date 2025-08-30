@@ -1,7 +1,8 @@
 # zio-http-pac4j
 
 [![Build Status](https://github.com/seroperson/zio-http-pac4j/actions/workflows/build.yml/badge.svg)](https://github.com/seroperson/zio-http-pac4j/actions/workflows/build.yml)
-[![Maven Central Version](https://img.shields.io/maven-central/v/me.seroperson/zio-http-pac4j_2.12)](https://mvnrepository.com/artifact/me.seroperson/zio-http-pac4j)
+[![Maven Central Version](https://img.shields.io/maven-central/v/me.seroperson/zio-http-pac4j_2.13)](https://mvnrepository.com/artifact/me.seroperson/zio-http-pac4j)
+![Maven Central Last Update](https://img.shields.io/maven-central/last-update/me.seroperson/zio-http-pac4j_2.13)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/seroperson/zio-http-pac4j/LICENSE)
 
 <!-- prettier-ignore-start -->
