@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check code format
         uses: jrouly/scalafmt-native-action@v1
         with:
@@ -38,5 +40,6 @@ jobs:
       - name: Upload dependency graph
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: zio-form-oauth_2.13 zio-sveltekit_2.13 zio-jwt_2.13
+          modules-ignore: |
+            zio-form-oauth_2.13 zio-sveltekit-backend_2.13 zio-jwt_2.13 root_2.13
           configs-ignore: scala-doc-tool

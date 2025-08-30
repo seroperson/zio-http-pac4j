@@ -12,8 +12,8 @@
 
 This library provides [pac4j][1] integration for [zio-http][2]. It allows you to
 easily implement authorization, authentication mechanisms to secure your web
-service. Resulting API appears to be a little "javish", but still it's better
-than nothing.
+service. As `pac4j` is a Java library and it's hard to hide all Java APIs, be
+ready to interact with some "javish" leftovers.
 
 This repository is managed using [jj][9] (jujutsu) VCS.
 
@@ -44,7 +44,7 @@ login + password form. Adding necessary OAuth `pac4j` library is mandatory, as
 it isn't included out-of-box:
 
 ```scala
-val pac4jVersion = "6.2.0"
+val pac4jVersion = "6.2.1"
 
 libraryDependencies ++= Seq(
   "org.pac4j" % "pac4j-oauth" % pac4jVersion

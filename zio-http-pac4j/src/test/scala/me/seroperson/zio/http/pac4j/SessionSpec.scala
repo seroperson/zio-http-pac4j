@@ -26,10 +26,6 @@ import zio.http.Header.Location
 import zio.http.Header.SetCookie
 import zio.http.MediaTypes
 import zio.http.Request
-import zio.logging.ConsoleLoggerConfig
-import zio.logging.LogFilter
-import zio.logging.consoleLogger
-import zio.logging.slf4j.bridge.Slf4jBridge
 import zio.test._
 import zio.test.Assertion._
 

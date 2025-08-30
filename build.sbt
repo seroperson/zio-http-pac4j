@@ -1,17 +1,14 @@
 ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / organization := "me.seroperson"
-ThisBuild / version := "0.1.0"
 
 // Dependency versions
 val zioVersion = "2.1.20"
 val zioHttpVersion = "3.4.0"
-val pac4jVersion = "6.2.0"
+val pac4jVersion = "6.2.1"
 val scalaTestVersion = "3.2.19"
 
 // Common settings
 lazy val commonSettings = Seq(
-  // pac4j repositories
-  resolvers += "JBoss Repository" at "https://repository.jboss.org/nexus/content/repositories/public/",
   scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",
@@ -22,7 +19,7 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val runnableSettings = Seq(
+lazy val exampleSettings = Seq(
   // Kill the application if requested
   Global / cancelable := true,
   // Allows to run the application not in the sbt's jvm itself
@@ -32,7 +29,10 @@ lazy val runnableSettings = Seq(
   // Forward stdin from the sbt shell to the application
   connectInput / run := true,
   // don't publish examples
-  publish / skip := true
+  publish / skip := true,
+  // Resolving opensaml dependencies
+  resolvers += "JBoss Repository" at "https://repository.jboss.org/nexus/content/repositories/public/",
+  libraryDependencies ++= coreDependencies ++ exampleDependencies
 )
 
 // Core dependencies
@@ -46,8 +46,9 @@ lazy val coreDependencies = Seq(
 lazy val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
   "dev.zio" %% "zio-test" % zioVersion % Test,
-  "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-) ++ exampleDependencies
+  "dev.zio" %% "zio-test-sbt" % zioVersion % Test,
+  "org.pac4j" % "pac4j-http" % pac4jVersion % Test
+)
 
 // Example dependencies
 lazy val exampleDependencies = Seq(
@@ -70,7 +71,6 @@ lazy val `zio-http-pac4j` = (project in file("zio-http-pac4j"))
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
 
     // Publishing settings
-    publishMavenStyle := true,
     licenses := List("MIT" -> url("https://opensource.org/licenses/MIT")),
     description := "Security library for zio-http based on pac4j",
     homepage := Some(url("https://github.com/seroperson/zio-http-pac4j")),
@@ -87,14 +87,7 @@ lazy val `zio-http-pac4j` = (project in file("zio-http-pac4j"))
         email = "seroperson@gmail.com",
         url = url("https://seroperson.me/")
       )
-    ),
-    publishTo := {
-      val nexus = "https://oss.sonatype.org/"
-      if (isSnapshot.value)
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases" at nexus + "service/local/staging/deploy/maven2")
-    }
+    )
   )
 
 lazy val `zio-form-oauth` =
@@ -102,30 +95,21 @@ lazy val `zio-form-oauth` =
     .dependsOn(`zio-http-pac4j`)
     .enablePlugins(JavaAppPackaging)
     .settings(commonSettings)
-    .settings(runnableSettings)
-    .settings(
-      libraryDependencies ++= coreDependencies ++ exampleDependencies
-    )
+    .settings(exampleSettings)
 
 lazy val `zio-jwt` =
   (project in file("example/zio-jwt"))
     .dependsOn(`zio-http-pac4j`)
     .enablePlugins(JavaAppPackaging)
     .settings(commonSettings)
-    .settings(runnableSettings)
-    .settings(
-      libraryDependencies ++= coreDependencies ++ exampleDependencies
-    )
+    .settings(exampleSettings)
 
 lazy val `zio-sveltekit-backend` =
   (project in file("example/zio-sveltekit/backend"))
     .dependsOn(`zio-http-pac4j`)
     .enablePlugins(JavaAppPackaging)
     .settings(commonSettings)
-    .settings(runnableSettings)
-    .settings(
-      libraryDependencies ++= coreDependencies ++ exampleDependencies
-    )
+    .settings(exampleSettings)
 
 // Root project
 lazy val root = (project in file("."))
