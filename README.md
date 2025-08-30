@@ -23,13 +23,13 @@ This repository is managed using [jj][9] (jujutsu) VCS.
 In case you use `sbt`:
 
 ```sbt
-libraryDependencies += "me.seroperson" %% "zio-http-pac4j" % "0.1.0"
+libraryDependencies += "me.seroperson" %% "zio-http-pac4j" % "0.1.1"
 ```
 
 In case of `mill`:
 
 ```scala
-mvn"me.seroperson::zio-http-pac4j::0.1.0"
+mvn"me.seroperson::zio-http-pac4j::0.1.1"
 ```
 
 This library depends on `pac4j` version `6.x`, which requires you to run at
@@ -162,7 +162,6 @@ val userRoutes = Routes(
       )
     } yield response
   } @@ Pac4jMiddleware.securityFilter(
-    clients = List(),
     authorizers = List("IsFullyAuthenticatedAuthorizer")
   )
 )

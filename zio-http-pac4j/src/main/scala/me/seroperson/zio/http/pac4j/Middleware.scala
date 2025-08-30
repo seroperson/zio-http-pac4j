@@ -52,63 +52,6 @@ object Pac4jMiddleware {
     */
   private def nullIfEmpty(value: String) = if (value.isEmpty) null else value
 
-  /** Creates a handler aspect that verifies if a user is authenticated. Returns
-    * an error response if the user is not authenticated.
-    *
-    * This middleware checks for the presence of an authenticated user profile
-    * in the current session and fails with an internal server error if no valid
-    * authentication is found.
-    *
-    * @return
-    *   A HandlerAspect that verifies authentication status
-    */
-  def errorIfUnauthorized =
-    HandlerAspect.customAuthZIO(
-      verify = (req: Request) =>
-        (for {
-          pac4jConfig <- buildPac4jConfig(req)
-          webContext <- buildPac4jWebContext(pac4jConfig)
-          sessionStore <- buildPac4jSessionStore(pac4jConfig)
-          profileManager <- buildPac4jProfileManager(
-            pac4jConfig,
-            webContext,
-            sessionStore
-          )
-          profile = profileManager.getProfile.toScala
-        } yield profile.isDefined).mapError { _ =>
-          Response.internalServerError
-        }.logError
-    )
-
-  /** Creates a handler aspect that verifies authentication and provides the
-    * user profile. Returns an error response if the user is not authenticated,
-    * otherwise provides the authenticated user's profile to the handler.
-    *
-    * This middleware not only checks for authentication but also makes the user
-    * profile available to the handler logic for further processing.
-    *
-    * @return
-    *   A HandlerAspect that verifies authentication and provides the user
-    *   profile
-    */
-  def errorIfUnauthorizedWithProfile =
-    HandlerAspect.customAuthProvidingZIO(
-      provide = (req: Request) =>
-        (for {
-          pac4jConfig <- buildPac4jConfig(req)
-          webContext <- buildPac4jWebContext(pac4jConfig)
-          sessionStore <- buildPac4jSessionStore(pac4jConfig)
-          profileManager <- buildPac4jProfileManager(
-            pac4jConfig,
-            webContext,
-            sessionStore
-          )
-          profile = profileManager.getProfile.toScala
-        } yield profile).mapError { _ =>
-          Response.internalServerError
-        }.logError
-    )
-
   /** Creates a security filter that enforces authentication and authorization
     * rules and provides the authenticated user profile to the handler.
     *
@@ -118,7 +61,9 @@ object Pac4jMiddleware {
     * response.
     *
     * @param clients
-    *   List of client names to use for authentication
+    *   List of client names to use for authentication. If None, then the
+    *   default client will be used. If Some, but blank, then it means that no
+    *   clients defined.
     * @param authorizers
     *   List of authorizer names to use for authorization
     * @param matchers
@@ -127,7 +72,7 @@ object Pac4jMiddleware {
     *   A HandlerAspect that enforces security and provides the user profile
     */
   def securityFilter(
-      clients: List[String] = List.empty,
+      clients: Option[List[String]] = None,
       authorizers: List[String] = List.empty,
       matchers: List[String] = List.empty
   ) =
@@ -141,7 +86,7 @@ object Pac4jMiddleware {
             .perform(
               pac4jConfig,
               securityGrantedAccess,
-              nullIfEmpty(clients.mkString(",")),
+              clients.map(_.mkString(",")).orNull,
               nullIfEmpty(authorizers.mkString(",")),
               nullIfEmpty(matchers.mkString(",")),
               null: FrameworkParameters
@@ -172,7 +117,9 @@ object Pac4jMiddleware {
     * doesn't provide the user profile data to the handler.
     *
     * @param clients
-    *   List of client names to use for authentication
+    *   List of client names to use for authentication. If None, then the
+    *   default client will be used. If Some, but blank, then it means that no
+    *   clients defined.
     * @param authorizers
     *   List of authorizer names to use for authorization
     * @param matchers
@@ -181,7 +128,7 @@ object Pac4jMiddleware {
     *   A HandlerAspect that enforces security without providing user profile
     */
   def securityFilterUnit(
-      clients: List[String] = List.empty,
+      clients: Option[List[String]] = None,
       authorizers: List[String] = List.empty,
       matchers: List[String] = List.empty
   ) =
@@ -195,7 +142,7 @@ object Pac4jMiddleware {
             .perform(
               pac4jConfig,
               securityGrantedAccess,
-              nullIfEmpty(clients.mkString(",")),
+              clients.map(_.mkString(",")).orNull,
               nullIfEmpty(authorizers.mkString(",")),
               nullIfEmpty(matchers.mkString(",")),
               null: FrameworkParameters
@@ -217,7 +164,8 @@ object Pac4jMiddleware {
     * authentication.
     *
     * @param clients
-    *   List of client names to use for authentication
+    *   List of client names to use for authentication. If empty, then the
+    *   default client will be used.
     * @param authorizers
     *   List of authorizer names to use for authorization
     * @param matchers

@@ -28,8 +28,10 @@ lazy val exampleSettings = Seq(
   Test / fork := true,
   // Forward stdin from the sbt shell to the application
   connectInput / run := true,
-  // don't publish examples
+  // Don't publish examples
   publish / skip := true,
+  // Fixed version to hardcode it in docker-compose build
+  version := "0.1.0",
   // Resolving opensaml dependencies
   resolvers += "JBoss Repository" at "https://repository.jboss.org/nexus/content/repositories/public/",
   libraryDependencies ++= coreDependencies ++ exampleDependencies

@@ -74,21 +74,21 @@ object ZioApi extends ZIOAppDefault {
         token = jwtGenerator.generate(profile)
       } yield Response.ok.copy(body = Body.fromCharSequence(token))
     } @@ [EncryptionConfiguration with SignatureConfiguration] Pac4jMiddleware
-      .securityFilter(clients = List("DirectBasicAuthClient")),
+      .securityFilter(clients = Some(List("DirectBasicAuthClient"))),
     Method.GET / "protected-query" -> handler {
       for {
         profile <- ZIO.service[UserProfile]
       } yield Response.ok
         .copy(body = Body.fromCharSequence(profile.getUsername))
     } @@ Pac4jMiddleware
-      .securityFilter(clients = List("ParameterClient")),
+      .securityFilter(clients = Some(List("ParameterClient"))),
     Method.GET / "protected-header" -> handler {
       for {
         profile <- ZIO.service[UserProfile]
       } yield Response.ok
         .copy(body = Body.fromCharSequence(profile.getUsername))
     } @@ Pac4jMiddleware
-      .securityFilter(clients = List("HeaderClient"))
+      .securityFilter(clients = Some(List("HeaderClient")))
   )
 
   override val run = for {

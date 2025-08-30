@@ -38,7 +38,10 @@ object SessionSpec extends ZIOSpecDefault {
           /* loginUrl = */ s"/loginForm",
           new SimpleTestUsernamePasswordAuthenticator()
         ).setCallbackUrl(s"/api/callback")
-      })
+      }),
+      authorizers = List(
+        "IsFullyAuthenticatedAuthorizer" -> new IsFullyAuthenticatedAuthorizer()
+      )
     )
   } >+> InMemorySessionRepository.live >+> ZioPac4jDefaults.live >+> Scope.default
 
@@ -50,7 +53,10 @@ object SessionSpec extends ZIOSpecDefault {
       Routes(
         Method.GET / Root -> (handler {
           ZIO.succeed(Response.ok)
-        } @@ Pac4jMiddleware.errorIfUnauthorized)
+        } @@ Pac4jMiddleware.securityFilterUnit(
+          clients = Some(List.empty),
+          authorizers = List("IsFullyAuthenticatedAuthorizer")
+        ))
       ))
 
     def loginRequest(client: String, sessionCookies: Headers) =
@@ -124,12 +130,13 @@ object SessionSpec extends ZIOSpecDefault {
       ) {
         (for {
           login <- loginRequest("FormClient", Headers.empty)
-          request = Request(
-            method = Method.GET,
-            headers = Headers(TestUtils.collectSessionCookies(login)),
-            url = URL.root
+          response <- allRoutes(
+            Request(
+              method = Method.GET,
+              headers = Headers(TestUtils.collectSessionCookies(login)),
+              url = URL.root
+            )
           )
-          response <- allRoutes(request)
         } yield assert(response.status)(equalTo(Status.Unauthorized)))
           .provide(defaultLayers)
       },

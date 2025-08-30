@@ -54,7 +54,7 @@ object ZioApi extends ZIOAppDefault {
         )
       } yield response
     } @@ Pac4jMiddleware.securityFilter(
-      clients = List(),
+      clients = Some(List.empty),
       authorizers = List("IsFullyAuthenticatedAuthorizer")
     )
   )

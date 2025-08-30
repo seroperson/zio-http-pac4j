@@ -13,8 +13,7 @@ target/
 
 # metals
 .metals/
-project/metals.sbt
-project/project/metals.sbt
+metals.sbt
 .bloop/
 
 # svelte
