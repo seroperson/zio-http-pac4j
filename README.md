@@ -14,7 +14,9 @@
 This library provides [pac4j][1] integration for [zio-http][2]. It allows you to
 easily implement authorization, authentication mechanisms to secure your web
 service. As `pac4j` is a Java library and it's hard to hide all Java APIs, be
-ready to interact with some "javish" leftovers.
+ready to interact with some "javish" leftovers. Also, check the [🛡️ Implementing
+a JWT-based authorization for zio-http][10] article, which shows even more
+details on how to leverage the power of `pac4j` using this library.
 
 This repository is managed using [jj][9] (jujutsu) VCS.
 
@@ -285,3 +287,4 @@ SOFTWARE.
 [7]: https://github.com/pac4j/http4s-pac4j
 [8]: https://github.com/pac4j/play-pac4j/
 [9]: https://github.com/jj-vcs/jj
+[10]: https://seroperson.me/2025/09/03/zio-http-jwt-auth/
