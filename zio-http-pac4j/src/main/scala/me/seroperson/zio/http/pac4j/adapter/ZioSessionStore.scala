@@ -39,11 +39,11 @@ class ZioSessionStore(
   ): Optional[String] = {
     (context.getRequestAttribute(Pac4jConstants.SESSION_ID).toScala match {
       case Some(sessionId) => Some(sessionId.toString)
-      case None =>
+      case None            =>
         context.getRequestCookies.asScala.find(
           _.getName == Pac4jConstants.SESSION_ID
         ) match {
-          case Some(cookie) => Option(cookie.getValue)
+          case Some(cookie)          => Option(cookie.getValue)
           case None if createSession =>
             Some(createSessionId(context.asInstanceOf[ZioWebContext]))
           case None => None
