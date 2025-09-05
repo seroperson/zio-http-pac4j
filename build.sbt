@@ -3,7 +3,7 @@ ThisBuild / organization := "me.seroperson"
 
 // Dependency versions
 val zioVersion = "2.1.20"
-val zioHttpVersion = "3.4.0"
+val zioHttpVersion = "3.4.1"
 val pac4jVersion = "6.2.1"
 val scalaTestVersion = "3.2.19"
 
