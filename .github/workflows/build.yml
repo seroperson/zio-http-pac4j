@@ -37,9 +37,3 @@ jobs:
         uses: sbt/setup-sbt@v1
       - name: Build and test
         run: sbt -v +test
-      - name: Upload dependency graph
-        uses: scalacenter/sbt-dependency-submission@v2
-        with:
-          modules-ignore: |
-            zio-form-oauth_2.13 zio-sveltekit-backend_2.13 zio-jwt_2.13 root_2.13
-          configs-ignore: scala-doc-tool
