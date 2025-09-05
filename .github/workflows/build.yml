@@ -25,7 +25,7 @@ jobs:
       - name: Check code format
         uses: jrouly/scalafmt-native-action@v1
         with:
-          version: "3.8.3"
+          version: "3.8.6"
           arguments: "-c .scalafmt.conf --test zio-http-pac4j example"
       - name: Setup Java
         uses: actions/setup-java@v4
