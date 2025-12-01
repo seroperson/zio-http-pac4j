@@ -2,7 +2,7 @@ ThisBuild / scalaVersion := "2.13.18"
 ThisBuild / organization := "me.seroperson"
 
 // Dependency versions
-val zioVersion = "2.1.22"
+val zioVersion = "2.1.23"
 val zioHttpVersion = "3.7.0"
 val pac4jVersion = "6.3.0"
 val scalaTestVersion = "3.2.19"
