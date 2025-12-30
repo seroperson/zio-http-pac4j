@@ -54,7 +54,7 @@ lazy val testDependencies = Seq(
 
 // Example dependencies
 lazy val exampleDependencies = Seq(
-  "dev.zio" %% "zio-logging-slf4j2-bridge" % "2.5.1",
+  "dev.zio" %% "zio-logging-slf4j2-bridge" % "2.5.2",
   "org.pac4j" % "pac4j-oauth" % pac4jVersion,
   "org.pac4j" % "pac4j-jwt" % pac4jVersion,
   "org.pac4j" % "pac4j-saml" % pac4jVersion,
