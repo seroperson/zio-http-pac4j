@@ -5,7 +5,7 @@ ThisBuild / organization := "me.seroperson"
 val zioVersion = "2.1.24"
 val zioHttpVersion = "3.8.0"
 val pac4jVersion = "6.3.1"
-val scalaTestVersion = "3.2.19"
+val scalaTestVersion = "3.2.20"
 
 // Common settings
 lazy val commonSettings = Seq(
