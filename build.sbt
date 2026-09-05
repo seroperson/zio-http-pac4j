@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.9.0"
 ThisBuild / organization := "me.seroperson"
 
 // Dependency versions
@@ -65,7 +65,7 @@ lazy val exampleDependencies = Seq(
 lazy val `zio-http-pac4j` = (project in file("zio-http-pac4j"))
   .settings(commonSettings)
   .settings(
-    crossScalaVersions := Seq("2.13.18", "3.3.7")
+    crossScalaVersions := Seq("3.9.0", "3.3.7")
   )
   .settings(
     name := "zio-http-pac4j",
